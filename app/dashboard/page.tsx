@@ -241,9 +241,9 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
     switch (activeSection) {
       case "dashboard":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20 bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
             <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-              <CardContent className="p-6">
+              <CardContent className="p-6 bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-card-foreground mb-2">Welcome to TechCraft Solutions!</h2>
@@ -265,8 +265,8 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
             </Card>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-card border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-card-foreground">Active Projects</CardTitle>
                   <FolderOpen className="h-4 w-4 text-muted-foreground" />
@@ -277,7 +277,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-card-foreground">Completed</CardTitle>
                   <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -288,7 +288,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-card-foreground">Total Clients</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -299,7 +299,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-card-foreground">Revenue</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -312,7 +312,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
             </div>
 
             {/* Recent Projects */}
-            <Card className="bg-card border-border">
+            <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
               <CardHeader>
                 <CardTitle className="text-card-foreground">Recent Projects</CardTitle>
                 <CardDescription className="text-muted-foreground">Your latest project updates</CardDescription>
@@ -349,7 +349,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
             </Card>
 
             {/* Recent Messages */}
-            <Card className="bg-card border-border">
+            <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
               <CardHeader>
                 <CardTitle className="text-card-foreground">Recent Messages</CardTitle>
                 <CardDescription className="text-muted-foreground">Latest client communications</CardDescription>
@@ -391,12 +391,12 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
       case "projects":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20 ">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-foreground">Projects</h2>
               <div className="flex space-x-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -y-1/2 h-4 w-4 text-muted-foreground bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]" />
                   <Input
                     placeholder="Search projects..."
                     value={searchQuery}
@@ -415,9 +415,9 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 ">
               {projects.map((project) => (
-                <Card key={project.id} className="bg-card border-border">
+                <Card key={project.id} className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-card-foreground">{project.name}</CardTitle>
@@ -500,11 +500,11 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
       case "chat":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20">
             <h2 className="text-2xl font-bold text-foreground">Messages</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
               {/* Chat List */}
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">Conversations</CardTitle>
                   <div className="relative">
@@ -633,7 +633,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
                     </div>
                   </Card>
                 ) : (
-                  <Card className="bg-card border-border h-full flex items-center justify-center">
+                  <Card className="bg-card border-border h-full flex items-center justify-center bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                     <div className="text-center">
                       <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-card-foreground mb-2">Select a conversation</h3>
@@ -648,7 +648,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
       case "documents":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-foreground">Documents</h2>
               <div className="flex space-x-2">
@@ -669,7 +669,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {documents.map((doc) => (
-                <Card key={doc.id} className="bg-card border-border">
+                <Card key={doc.id} className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
@@ -730,7 +730,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
       case "clients":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-foreground">Clients</h2>
               <div className="flex space-x-2">
@@ -751,7 +751,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {clients.map((client) => (
-                <Card key={client.id} className="bg-card border-border">
+                <Card key={client.id} className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                   <CardHeader>
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
@@ -817,10 +817,10 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
       case "profile":
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-20">
             <h2 className="text-2xl font-bold text-foreground">Profile</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">Account Information</CardTitle>
                   <CardDescription className="text-muted-foreground">Manage your account details</CardDescription>
@@ -867,7 +867,7 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card className="bg-card border-border bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">Security Settings</CardTitle>
                   <CardDescription className="text-muted-foreground">Manage your security preferences</CardDescription>
@@ -903,9 +903,9 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
       {/* Sidebar */}
-      <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+      <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
         <div className="p-6 border-b border-sidebar-border">
           <h1 className="text-xl font-bold text-sidebar-foreground">TechCraft Solutions</h1>
         </div>

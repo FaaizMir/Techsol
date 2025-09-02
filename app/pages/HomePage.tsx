@@ -306,43 +306,46 @@ export default function HomePage() {
         </AnimatedSection>
 
         {/* CTA Section */}
-        <AnimatedSection 
-          sectionId="cta" 
-          className="py-20 px-4"
-        >
-          <div className="max-w-4xl mx-auto text-center">
-            <AnimatedTitle className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              Ready to Transform Your Digital Presence?
-            </AnimatedTitle>
-            <AnimatedSubtitle className="text-lg text-gray-300 mb-8">
-              Get your free consultation and discover how we can bring your vision to life
-            </AnimatedSubtitle>
-            <AnimatedFadeIn>
-              <Link href="/contact">
-                <Button 
-                  size="lg" 
-                  className="animate-pulse hover:animate-none"
-                  icon={<ArrowRight className="h-5 w-5" />} 
-                  iconPosition="right"
-                >
-                  Start Your Project
-                </Button>
-              </Link>
-            </AnimatedFadeIn>
-            <AnimatedFadeIn>
-              <Link href="/signup">
-                <Button 
-                  size="lg" 
-                  className="animate-pulse hover:animate-none"
-                  icon={<ArrowRight className="h-5 w-5" />} 
-                  iconPosition="right"
-                >
-                  Custom Quote
-                </Button>
-              </Link>
-            </AnimatedFadeIn>
-          </div>
-        </AnimatedSection>
+        <AnimatedSection sectionId="cta" className="py-20 px-4">
+  <div className="max-w-4xl mx-auto text-center">
+    <AnimatedTitle className="text-3xl md:text-4xl font-bold mb-6 text-white">
+      Ready to Transform Your Digital Presence?
+    </AnimatedTitle>
+    <AnimatedSubtitle className="text-lg text-gray-300 mb-8">
+      Get your free consultation and discover how we can bring your vision to life
+    </AnimatedSubtitle>
+
+    {/* Flex container for buttons */}
+    <div className="flex justify-center gap-4">
+      <AnimatedFadeIn>
+        <Link href="/contact">
+          <Button 
+            size="lg" 
+            className="animate-pulse hover:animate-none"
+            icon={<ArrowRight className="h-5 w-5" />} 
+            iconPosition="right"
+          >
+            Start Your Project
+          </Button>
+        </Link>
+      </AnimatedFadeIn>
+
+      <AnimatedFadeIn>
+        <Link href="/login">
+          <Button 
+            size="lg" 
+            className="animate-pulse hover:animate-none"
+            icon={<ArrowRight className="h-5 w-5" />} 
+            iconPosition="right"
+          >
+            Custom Quote
+          </Button>
+        </Link>
+      </AnimatedFadeIn>
+    </div>
+  </div>
+</AnimatedSection>
+
       </div>
     </>
   )
