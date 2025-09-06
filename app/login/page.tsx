@@ -15,7 +15,7 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post("https://techsol-backend.vercel.app/api/auth/login", {
         username,
         password,
       });

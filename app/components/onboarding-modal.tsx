@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle, Upload, Plus, FileText, User, CreditCard, ClipboardList, X } from "lucide-react"
+import { CheckCircle, Upload, Plus, FileText, User, CreditCard, ClipboardList, X, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
 import { useOnboarding } from "@/hooks/use-onboarding"
 
@@ -12,6 +12,8 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ onComplete, onClose }: OnboardingModalProps) {
   const { data, currentStep, setCurrentStep, updateData } = useOnboarding()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const steps = [
     { title: "Project Details", icon: ClipboardList },
@@ -46,9 +48,70 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
     updateData("milestones", newMilestones)
   }
 
-  const handleSubmit = () => {
+const handleSubmit = async () => {
+  setIsSubmitting(true)
+  setSubmitError(null)
+
+  try {
+    // Prepare the data for submission
+    const formData = new FormData()
+
+    // Add project data
+    formData.append('projectTitle', data.project.title)
+    formData.append('projectCategory', data.project.category)
+    formData.append('projectDescription', data.project.description)
+    formData.append('projectDeadline', data.project.deadline)
+
+    // Add client data
+    formData.append('clientName', data.client.name)
+    formData.append('clientEmail', data.client.email)
+    formData.append('clientCompany', data.client.company || '')
+    formData.append('clientCountry', data.client.country)
+
+    // Add requirements
+    formData.append('requirementsNotes', data.requirements.notes)
+
+    // Add files if any
+    if (data.requirements.files && data.requirements.files.length > 0) {
+      data.requirements.files.forEach((file, index) => {
+        formData.append(`files[${index}]`, file)
+      })
+    }
+
+    // Add milestones as JSON string
+    formData.append('milestones', JSON.stringify(data.milestones))
+
+    // Get token from localStorage
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
+
+    // Send request to backend
+    const response = await fetch('http://localhost:4000/api/onboarding/onboardingdata', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}` // <-- send token for auth middleware
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to submit onboarding data')
+    }
+
+    const result = await response.json()
+    console.log('Onboarding data submitted successfully:', result)
+
+    // Call the onComplete callback
     onComplete()
+  } catch (error) {
+    console.error('Error submitting onboarding data:', error)
+    setSubmitError(error instanceof Error ? error.message : 'An error occurred while submitting')
+  } finally {
+    setIsSubmitting(false)
   }
+}
+
+
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -425,10 +488,17 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
                 </div>
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                 >
-                  Go to Dashboard
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSubmitting ? 'Submitting...' : 'Go to Dashboard'}
                 </button>
+                {submitError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+                    {submitError}
+                  </div>
+                )}
               </div>
             )}
 
