@@ -14,7 +14,7 @@ export default function Signup() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post("https://techsol-backend.vercel.app/api/auth/signup", {
+      const res = await axios.post("https://techsol-backend-production.up.railway.app/auth/signup", {
         username,
         password,
       });
@@ -88,3 +88,4 @@ export default function Signup() {
     </motion.div>
   );
 }
+
