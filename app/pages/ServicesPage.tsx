@@ -1,6 +1,6 @@
 "use client"
 
-import { Code, Cloud, Network, Shield, Palette, CheckCircle, ArrowRight } from "lucide-react"
+import { Code, Cloud, Network, Shield, Palette, CheckCircle, ArrowRight, Brain } from "lucide-react"
 import Link from "next/link"
 import Button from "../components/Button"
 import Card from "../components/Card"
@@ -19,6 +19,7 @@ export default function ServicesPage() {
         "Performance optimization",
         "SEO-friendly architecture",
       ],
+      src:"/services images/web.png",
       benefits: "Faster time-to-market, enhanced user engagement, and scalable solutions that grow with your business.",
     },
     {
@@ -33,6 +34,7 @@ export default function ServicesPage() {
         "Infrastructure as Code",
         "Monitoring and logging",
       ],
+      src:"/services images/cloud.png",
       benefits:
         "Reduced operational costs, improved scalability, and automated deployment processes that ensure 99.9% uptime.",
     },
@@ -48,6 +50,7 @@ export default function ServicesPage() {
         "Disaster recovery planning",
         "Resource management",
       ],
+      src:"/services images/vmware.png",
       benefits:
         "Server consolidation savings of up to 70%, improved resource utilization, and enhanced business continuity.",
     },
@@ -63,6 +66,7 @@ export default function ServicesPage() {
         "Security auditing",
         "Performance monitoring",
       ],
+      src:"/services images/network.png",
       benefits: "Enhanced security posture, improved network performance, and compliance with industry standards.",
     },
     {
@@ -77,7 +81,21 @@ export default function ServicesPage() {
         "AR/VR integration",
         "Custom animations",
       ],
+      src:"/services images/3d.png",
       benefits: "Increased user engagement by 300%, memorable brand experiences, and competitive differentiation.",
+    },
+     {
+      icon: <Brain className="h-12 w-12" />,
+      title: "Data Science & AI Solutions",
+      description:
+        "Leveraging data to drive business insights and AI solutions. We specialize in predictive analytics, machine learning models, and data visualization techniques.",
+      features: [
+        "Predictive analytics",
+        "Machine learning model development",
+        "Data visualization techniques",
+      ],
+      src:"/services images/ai.png",
+      benefits: "Data-driven decision making, improved operational efficiency, and innovative AI-powered solutions.",
     },
   ]
 
@@ -133,7 +151,7 @@ export default function ServicesPage() {
                 <div className="flex-1">
                   <div className="relative">
                     <img
-                      src={`/placeholder.svg?height=400&width=600`}
+                      src={service.src}
                       alt={service.title}
                       className="w-full h-80 object-cover rounded-xl"
                     />
