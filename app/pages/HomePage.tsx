@@ -57,6 +57,11 @@ export default function HomePage() {
       title: "3D Interactive Design",
       description: "Immersive WebGL and Three.js experiences",
     },
+    {
+      icon: <Palette className="h-8 w-8" />,
+      title: "Data Science & AI",
+      description: "Predictive analytics and machine learning solutions",
+    },
   ]
 
   const projects = [
