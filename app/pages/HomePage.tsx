@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { ArrowRight, Code, Cloud, Network, Palette, Shield, Users, ChevronDown, MousePointer } from "lucide-react"
+import { ArrowRight,Brain, Code, Cloud, Network, Palette, Shield, Users, ChevronDown, MousePointer } from "lucide-react"
 import Link from "next/link"
 import { motion, useScroll, useTransform } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -58,7 +58,7 @@ export default function HomePage() {
       description: "Immersive WebGL and Three.js experiences",
     },
     {
-      icon: <Palette className="h-8 w-8" />,
+      icon: <Brain className="h-8 w-8" />,
       title: "Data Science & AI",
       description: "Predictive analytics and machine learning solutions",
     },
