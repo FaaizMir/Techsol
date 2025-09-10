@@ -9,8 +9,26 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; // ✅ Import Link
+// import { GoogleLogin } from "@react-oauth/google";
+// import jwtDecode from "jwt-decode";
+
+
 
 export default function Login() {
+   const handleSuccess = async (credentialResponse: any) => {
+    const id_token = credentialResponse.credential;
+
+    // Send to backend
+    const res = await fetch("https://techsol-backend-production.up.railway.app/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_token }),
+    });
+
+    const data = await res.json();
+    console.log("JWT from backend:", data.token);
+    localStorage.setItem("token", data.token);
+  };
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -19,10 +37,14 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post("https://techsol-backend-production.up.railway.app/api/auth/login", {
+      const res = await axios.post("https://techsol-backend.vercel.app/api/auth/login", {
         username,
         password,
-      });
+      },
+     {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: false // Only set to true if you plan to handle cookies
+        });
 
       localStorage.setItem("token", res.data.token);
       setMessage("Login successful! Redirecting...");
@@ -89,6 +111,15 @@ export default function Login() {
             Sign Up
           </Link>
         </p>
+         {/* <div>
+      <h1>Login with Google</h1>
+      <GoogleLogin
+        onSuccess={handleSuccess}
+        onError={() => {
+          console.log("Login Failed");
+        }}
+      />
+    </div> */}
       </motion.form>
     </motion.div>
   );

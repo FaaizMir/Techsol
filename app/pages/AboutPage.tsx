@@ -87,9 +87,9 @@ export default function AboutPage() {
             </div>
             <div className="relative">
               <img
-                src="/placeholder.svg?height=500&width=500"
-                alt="Founder"
-                className="w-full h-96 object-cover rounded-2xl"
+                src="/about images/aboutimg.png"
+                alt="About TechCraft Solutions"
+                className="w-full h-98 object-cover rounded-2xl"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent rounded-2xl"></div>
             </div>
