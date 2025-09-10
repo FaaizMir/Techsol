@@ -46,7 +46,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     // ✅ token exists & is valid -> verify with backend
     axios
-      .get("https://techsol-backend-production.up.railway.app/api/protected/check-auth", {
+      .get("https://techsol-backend.vercel.app/api/protected/check-auth", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(() => {

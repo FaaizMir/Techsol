@@ -43,7 +43,6 @@ export default function Login() {
       },
      {
           headers: { 'Content-Type': 'application/json' },
-          withCredentials: false // Only set to true if you plan to handle cookies
         });
 
       localStorage.setItem("token", res.data.token);
