@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { CheckCircle, Upload, Plus, FileText, User, CreditCard, ClipboardList, X, Loader2 } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useOnboarding } from "@/hooks/use-onboarding"
+import { useAuthStore } from '@/lib/stores/auth-store'
 
 interface OnboardingModalProps {
   onComplete: () => void
@@ -12,6 +13,7 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ onComplete, onClose }: OnboardingModalProps) {
   const { data, currentStep, setCurrentStep, updateData } = useOnboarding()
+  const { updateOnboardingStatus } = useAuthStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -57,29 +59,29 @@ const handleSubmit = async () => {
     const formData = new FormData()
 
     // Add project data
-    formData.append('projectTitle', data.project.title)
-    formData.append('projectCategory', data.project.category)
-    formData.append('projectDescription', data.project.description)
-    formData.append('projectDeadline', data.project.deadline)
+    formData.append('projectTitle', data.project?.title || '')
+    formData.append('projectCategory', data.project?.category || '')
+    formData.append('projectDescription', data.project?.description || '')
+    formData.append('projectDeadline', data.project?.deadline || '')
 
     // Add client data
-    formData.append('clientName', data.client.name)
-    formData.append('clientEmail', data.client.email)
-    formData.append('clientCompany', data.client.company || '')
-    formData.append('clientCountry', data.client.country)
+    formData.append('clientName', data.client?.name || '')
+    formData.append('clientEmail', data.client?.email || '')
+    formData.append('clientCompany', data.client?.company || '')
+    formData.append('clientCountry', data.client?.country || '')
 
     // Add requirements
-    formData.append('requirementsNotes', data.requirements.notes)
+    formData.append('requirementsNotes', data.requirements?.notes || '')
 
     // Add files if any
-    if (data.requirements.files && data.requirements.files.length > 0) {
+    if (data.requirements?.files && data.requirements.files.length > 0) {
       data.requirements.files.forEach((file: File, index: number) => {
         formData.append(`files[${index}]`, file)
       })
     }
 
     // Add milestones as JSON string
-    formData.append('milestones', JSON.stringify(data.milestones))
+    formData.append('milestones', JSON.stringify(data.milestones || []))
 
     // Get token from localStorage
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
@@ -101,6 +103,9 @@ const handleSubmit = async () => {
     const result = await response.json()
     console.log('Onboarding data submitted successfully:', result)
 
+    // Update user onboarding status in auth store
+    updateOnboardingStatus(true)
+
     // Call the onComplete callback
     onComplete()
   } catch (error) {
@@ -117,13 +122,18 @@ const handleSubmit = async () => {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border p-0">
         <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="sr-only">Project Onboarding</DialogTitle>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-card-foreground">Project Onboarding</h1>
               <p className="text-muted-foreground">Complete your project setup in just a few simple steps</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
-              <X className="h-5 w-5 text-muted-foreground" />
+            <button 
+              onClick={onClose} 
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+              aria-label="Close modal"
+            >
+              <X className="h-5 w-5 text-gray-500 group-hover:text-gray-700" />
             </button>
           </div>
         </DialogHeader>
@@ -191,7 +201,7 @@ const handleSubmit = async () => {
                     <input
                       type="text"
                       placeholder="Enter your project title"
-                      value={data.project.title}
+                      value={data.project?.title || ""}
                       onChange={(e) => updateData("project", { ...data.project, title: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -201,7 +211,7 @@ const handleSubmit = async () => {
                     <input
                       type="text"
                       placeholder="e.g., Web Development, Design"
-                      value={data.project.category}
+                      value={data.project?.category || ""}
                       onChange={(e) => updateData("project", { ...data.project, category: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -211,7 +221,7 @@ const handleSubmit = async () => {
                   <label className="text-sm font-semibold text-card-foreground">Project Description</label>
                   <textarea
                     placeholder="Describe your project in detail..."
-                    value={data.project.description}
+                    value={data.project?.description || ""}
                     onChange={(e) => updateData("project", { ...data.project, description: e.target.value })}
                     rows={3}
                     className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 resize-none"
@@ -221,7 +231,7 @@ const handleSubmit = async () => {
                   <label className="text-sm font-semibold text-card-foreground">Project Deadline</label>
                   <input
                     type="date"
-                    value={data.project.deadline}
+                    value={data.project?.deadline || ""}
                     onChange={(e) => updateData("project", { ...data.project, deadline: e.target.value })}
                     className="w-full p-3 border border-border rounded-lg text-card-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                   />
@@ -236,7 +246,7 @@ const handleSubmit = async () => {
                   <label className="text-sm font-semibold text-card-foreground">Special Requirements</label>
                   <textarea
                     placeholder="Any specific requirements, technologies, or constraints..."
-                    value={data.requirements.notes}
+                    value={data.requirements?.notes || ""}
                     onChange={(e) => updateData("requirements", { ...data.requirements, notes: e.target.value })}
                     rows={4}
                     className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 resize-none"
@@ -269,7 +279,7 @@ const handleSubmit = async () => {
                 <div className="text-center mb-4">
                   <p className="text-muted-foreground">Define project milestones and payment schedule</p>
                 </div>
-                {data.milestones.map((ms: any, idx: number) => (
+                {data.milestones?.map((ms: any, idx: number) => (
                   <motion.div
                     key={idx}
                     initial={{ opacity: 0, y: 20 }}
@@ -331,7 +341,7 @@ const handleSubmit = async () => {
                 ))}
                 <button
                   onClick={addMilestone}
-                  className="w-full p-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:border-primary hover:text-primary transition-all duration-200 flex items-center justify-center gap-2 bg-muted/50"
+                  className="w-full p-3 border-2 border-dashed border-primary/30 rounded-lg text-primary hover:border-primary hover:bg-primary/5 transition-all duration-200 flex items-center justify-center gap-2 bg-primary/5"
                 >
                   <Plus className="w-4 h-4" />
                   Add Another Milestone
@@ -348,7 +358,7 @@ const handleSubmit = async () => {
                     <input
                       type="text"
                       placeholder="Enter your full name"
-                      value={data.client.name}
+                      value={data.client?.name || ""}
                       onChange={(e) => updateData("client", { ...data.client, name: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -358,7 +368,7 @@ const handleSubmit = async () => {
                     <input
                       type="email"
                       placeholder="your@email.com"
-                      value={data.client.email}
+                      value={data.client?.email || ""}
                       onChange={(e) => updateData("client", { ...data.client, email: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -368,7 +378,7 @@ const handleSubmit = async () => {
                     <input
                       type="text"
                       placeholder="Your company name"
-                      value={data.client.company}
+                      value={data.client?.company || ""}
                       onChange={(e) => updateData("client", { ...data.client, company: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -378,7 +388,7 @@ const handleSubmit = async () => {
                     <input
                       type="text"
                       placeholder="Your country"
-                      value={data.client.country}
+                      value={data.client?.country || ""}
                       onChange={(e) => updateData("client", { ...data.client, country: e.target.value })}
                       className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                     />
@@ -400,28 +410,28 @@ const handleSubmit = async () => {
                     <div>
                       <h4 className="font-semibold text-card-foreground mb-2">Project Information</h4>
                       <p>
-                        <span className="font-medium">Title:</span> {data.project.title || "Not specified"}
+                        <span className="font-medium">Title:</span> {data.project?.title || "Not specified"}
                       </p>
                       <p>
-                        <span className="font-medium">Category:</span> {data.project.category || "Not specified"}
+                        <span className="font-medium">Category:</span> {data.project?.category || "Not specified"}
                       </p>
                       <p>
-                        <span className="font-medium">Deadline:</span> {data.project.deadline || "Not specified"}
+                        <span className="font-medium">Deadline:</span> {data.project?.deadline || "Not specified"}
                       </p>
                     </div>
                     <div>
                       <h4 className="font-semibold text-card-foreground mb-2">Client Information</h4>
                       <p>
-                        <span className="font-medium">Name:</span> {data.client.name || "Not specified"}
+                        <span className="font-medium">Name:</span> {data.client?.name || "Not specified"}
                       </p>
                       <p>
-                        <span className="font-medium">Email:</span> {data.client.email || "Not specified"}
+                        <span className="font-medium">Email:</span> {data.client?.email || "Not specified"}
                       </p>
                       <p>
-                        <span className="font-medium">Company:</span> {data.client.company || "Not specified"}
+                        <span className="font-medium">Company:</span> {data.client?.company || "Not specified"}
                       </p>
                       <p>
-                        <span className="font-medium">Country:</span> {data.client.country || "Not specified"}
+                        <span className="font-medium">Country:</span> {data.client?.country || "Not specified"}
                       </p>
                     </div>
                   </div>
@@ -429,21 +439,21 @@ const handleSubmit = async () => {
                   <div>
                     <h4 className="font-semibold text-card-foreground mb-2">Project Description</h4>
                     <p className="text-muted-foreground bg-background p-3 rounded-lg border border-border">
-                      {data.project.description || "No description provided"}
+                      {data.project?.description || "No description provided"}
                     </p>
                   </div>
 
                   <div>
                     <h4 className="font-semibold text-card-foreground mb-2">Requirements</h4>
                     <p className="text-muted-foreground bg-background p-3 rounded-lg border border-border">
-                      {data.requirements.notes || "No special requirements"}
+                      {data.requirements?.notes || "No special requirements"}
                     </p>
                   </div>
 
                   <div>
                     <h4 className="font-semibold text-card-foreground mb-2">Payment Milestones</h4>
                     <div className="space-y-2">
-                      {data.milestones.map((ms: any, idx: number) => (
+                      {data.milestones?.map((ms: any, idx: number) => (
                         <div key={idx} className="bg-background p-3 rounded-lg border-l-4 border-primary">
                           <div className="flex justify-between items-start">
                             <div>
@@ -489,7 +499,7 @@ const handleSubmit = async () => {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isSubmitting ? 'Submitting...' : 'Go to Dashboard'}
@@ -507,7 +517,7 @@ const handleSubmit = async () => {
                 {localStep > 0 && localStep < 5 && (
                   <button
                     onClick={prevStep}
-                    className="px-4 py-2 bg-muted text-muted-foreground border border-border rounded-lg hover:bg-muted/80 transition-all duration-200 font-medium"
+                    className="px-6 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
                   >
                     ← Back
                   </button>
@@ -522,7 +532,7 @@ const handleSubmit = async () => {
                 {localStep < 4 && (
                   <button
                     onClick={nextStep}
-                    className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
                   >
                     Next →
                   </button>
@@ -530,7 +540,7 @@ const handleSubmit = async () => {
                 {localStep === 4 && (
                   <button
                     onClick={nextStep}
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-200 font-semibold"
                   >
                     Submit Order →
                   </button>

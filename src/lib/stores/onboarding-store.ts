@@ -12,11 +12,24 @@ interface OnboardingState {
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
-      step: 1,
-      data: {},
+      step: 0,
+      data: {
+        project: { title: "", description: "", category: "", deadline: "" },
+        requirements: { notes: "", files: [] },
+        milestones: [{ title: "", deliverable: "", deadline: "", amount: "" }],
+        client: { name: "", email: "", company: "", country: "" },
+      },
       setStep: (step) => set({ step }),
       updateData: (newData) => set((state) => ({ data: { ...state.data, ...newData } })),
-      reset: () => set({ step: 1, data: {} }),
+      reset: () => set({ 
+        step: 0, 
+        data: {
+          project: { title: "", description: "", category: "", deadline: "" },
+          requirements: { notes: "", files: [] },
+          milestones: [{ title: "", deliverable: "", deadline: "", amount: "" }],
+          client: { name: "", email: "", company: "", country: "" },
+        }
+      }),
     }),
     { name: 'onboarding-storage' }
   )

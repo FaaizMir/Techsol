@@ -28,9 +28,9 @@ export default function Button({
 
   const variantClasses = {
     primary:
-      "bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white focus:ring-cyan-500",
+      "bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white focus:ring-blue-500 shadow-lg",
     secondary: "bg-gray-700 hover:bg-gray-600 text-white focus:ring-gray-500",
-    outline: "border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-gray-900 focus:ring-cyan-500",
+    outline: "border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white focus:ring-blue-500",
   }
 
   const sizeClasses = {

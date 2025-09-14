@@ -3,8 +3,11 @@ import { persist } from 'zustand/middleware';
 
 interface User {
   id: number;
-  username: string;
-  email?: string;
+  email: string;
+  username?: string;
+  isOnboardingCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthState {
@@ -14,6 +17,7 @@ interface AuthState {
   setAuth: (token: string, user: User) => void;
   clearAuth: () => void;
   setUser: (user: User) => void;
+  updateOnboardingStatus: (completed: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,6 +29,9 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) => set({ user, token, isAuthenticated: true }),
       clearAuth: () => set({ user: null, token: null, isAuthenticated: false }),
       setUser: (user) => set({ user }),
+      updateOnboardingStatus: (completed) => set((state) => ({
+        user: state.user ? { ...state.user, isOnboardingCompleted: completed } : null
+      })),
     }),
     { name: 'auth-storage' }
   )

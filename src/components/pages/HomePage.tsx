@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowRight,Brain, Code, Cloud, Network, Palette, Shield, Users, ChevronDown, MousePointer } from "lucide-react"
 import Link from "next/link"
 import { motion, useScroll, useTransform } from 'framer-motion'
@@ -12,6 +13,7 @@ import { AnimatedTitle, AnimatedSubtitle, AnimatedItem, AnimatedFadeIn, Animated
 import ParallaxElement from "@/components/common/ParallaxElement"
 import ScrollProgress from "@/components/common/ScrollProgress"
 import { useScrollSection } from "../../hooks/scroll-section-context"
+import { useAuth } from "@/components/providers/AuthProvider"
 
 // Import components dynamically to prevent SSR issues
 const BackgroundParticles = dynamic(() => import('@/components/common/BackgroundParticles'), { ssr: false })
@@ -21,6 +23,8 @@ export default function HomePage() {
   const { currentSection } = useScrollSection()
   const { scrollYProgress } = useScroll()
   const [mounted, setMounted] = useState(false)
+  const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
   
   // Parallax effects for hero text
   const heroTitleY = useTransform(scrollYProgress, [0, 0.1], [0, -100])
@@ -30,6 +34,29 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-900">
+        <div className="animate-pulse text-xl md:text-2xl text-white">
+          Loading...
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if user is authenticated (will redirect)
+  if (isAuthenticated) {
+    return null
+  }
 
   const services = [
     {

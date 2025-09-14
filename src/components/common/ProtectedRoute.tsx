@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface ProtectedRouteProps {
@@ -10,6 +11,13 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, redirectTo = "/login" }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, isLoading, router, redirectTo]);
 
   if (isLoading) {
     return (
@@ -22,7 +30,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, redirectTo = 
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-900">
+        <div className="animate-pulse text-xl md:text-2xl text-white">
+          Redirecting...
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

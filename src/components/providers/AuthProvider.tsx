@@ -7,18 +7,22 @@ import { apiCall } from '@/lib/api'
 
 interface User {
   id: number;
-  username: string;
-  email?: string;
+  email: string;
+  username?: string;
+  isOnboardingCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   user: User | null
-  login: (username: string, password: string) => Promise<void>
-  signup: (username: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
+  updateOnboardingStatus: (completed: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -32,26 +36,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     setAuth,
     clearAuth,
-    setUser
+    setUser,
+    updateOnboardingStatus
   } = useAuthStore()
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      const response = await apiCall<{ token: string; user: User }>('/auth/login', 'POST', { username, password })
+      const response = await apiCall<{ token: string; user: User }>('/auth/login', 'POST', { email, password })
 
       if (response.token) {
         localStorage.setItem('token', response.token)
         setAuth(response.token, response.user)
-        router.push('/dashboard')
+        // Check if onboarding is needed
+        if (!response.user.isOnboardingCompleted) {
+          router.push('/dashboard') // Will show onboarding modal
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (error) {
       throw error
     }
   }
 
-  const signup = async (username: string, password: string) => {
+  const signup = async (email: string, password: string) => {
     try {
-      const response = await apiCall<{ message: string; user: User }>('/auth/signup', 'POST', { username, password })
+      const response = await apiCall<{ message: string; user: User }>('/auth/signup', 'POST', { email, password })
 
       router.push('/login')
     } catch (error) {
@@ -102,7 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
-    checkAuth
+    checkAuth,
+    updateOnboardingStatus
   }
 
   return (

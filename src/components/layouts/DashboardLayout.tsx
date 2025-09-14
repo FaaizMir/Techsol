@@ -3,23 +3,16 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { usePathname } from 'next/navigation'
-import Navigation from '@/components/common/Navigation'
-import Footer from '@/components/common/Footer'
 import CustomCursor from '@/components/common/CustomCursor'
-// const CustomCursor = dynamic(() => import('./components/CustomCursor'), { ssr: false })
+import OnboardingChecker from '@/components/common/OnboardingChecker'
 
-export default function ClientLayout({
+export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   const [isLoading, setIsLoading] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
-  const pathname = usePathname()
-
-  // Check if we're on dashboard routes
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
 
   useEffect(() => {
     setIsMounted(true)
@@ -27,7 +20,7 @@ export default function ClientLayout({
     // Simulate loading delay for a smoother transition
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 1500)
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [])
@@ -36,10 +29,10 @@ export default function ClientLayout({
     <>
       {/* Only render custom cursor on client */}
       {isMounted && <CustomCursor />}
-      
+
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <motion.div 
+          <motion.div
             key="loader"
             className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900"
             initial={{ opacity: 1 }}
@@ -52,31 +45,27 @@ export default function ClientLayout({
               transition={{ duration: 0.5 }}
               className="text-center"
             >
-              <div className="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                TECH SOLUTIONS
+              <div className="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                Loading Dashboard...
               </div>
-              <div className="w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden mx-auto">
-                <motion.div 
-                  className="h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400"
+              <div className="w-32 h-1 bg-gray-800 rounded-full overflow-hidden mx-auto">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-purple-400"
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  transition={{ duration: 1, ease: "easeInOut" }}
                 />
               </div>
             </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
-      
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-black z-[-2]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-gray-900/0 to-transparent z-[-1]" />
-      
-      {!isDashboardRoute && <Navigation />}
-      <main>
+
+      <div className="min-h-screen bg-[#0a0f1c] bg-[radial-gradient(circle_at_50%_50%,#0a0f2c,#0d1117)]">
         <AnimatePresence mode="wait">
           {!isLoading && (
             <motion.div
-              key="content"
+              key="dashboard-content"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
@@ -85,8 +74,8 @@ export default function ClientLayout({
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
-      {!isDashboardRoute && <Footer />}
+        <OnboardingChecker />
+      </div>
     </>
   )
 }
