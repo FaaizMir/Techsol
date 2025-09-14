@@ -17,9 +17,12 @@ const nextConfig = {
     ],
   },
   experimental: {
-    // serverComponentsExternalPackages: ['@react-three/fiber', '@react-three/drei'], // Deprecated in Next.js 15
+    // Optimize for client components
+    optimizeCss: true,
   },
-  serverExternalPackages: ['@react-three/fiber', '@react-three/drei'],
+  // Ensure proper client component handling
+  transpilePackages: ['@react-three/fiber', '@react-three/drei', 'three'],
+  // Removed serverExternalPackages for Vercel compatibility
   webpack: (config, { isServer }) => {
     // Handle Three.js and related packages
     if (!isServer) {
@@ -31,7 +34,7 @@ const nextConfig = {
       };
     }
 
-    // Handle Framer Motion
+    // Ensure proper handling of dynamic imports
     config.module.rules.push({
       test: /\.m?js$/,
       type: 'javascript/auto',
@@ -46,8 +49,6 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Output configuration for static export if needed
-  output: 'standalone',
   // Enable compression
   compress: true,
   // Power optimizations
