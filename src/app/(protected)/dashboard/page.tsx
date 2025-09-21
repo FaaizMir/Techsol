@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import OnboardingChecker from "@/components/common/OnboardingChecker"
+import { useOnboarding } from "@/hooks/use-onboarding"
+import { onboardingAPI } from "@/lib/api"
+
+
 import {
   LayoutDashboard,
   MessageSquare,
@@ -35,12 +39,80 @@ import {
   Bell,
 } from "lucide-react"
 
+interface ProjectFull {
+  id: number;
+  name: string;
+  status: string;
+  progress: number;
+  dueDate: string;
+  client: string;
+  priority: string;
+  budget: string;
+  description: string;
+  tasks: { name: string; completed: boolean }[];
+  requirements: any;
+  milestones: any[];
+  clientInfo: any;
+}
 export default function Dashboard() {
+    const { showModal, setShowModal } = useOnboarding()
+
   const [activeSection, setActiveSection] = useState("dashboard")
   const [searchQuery, setSearchQuery] = useState("")
   const [newMessage, setNewMessage] = useState("")
   const [selectedChat, setSelectedChat] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+
+  //new onboardingAPI functions
+  const [projects, setProjects] = useState<ProjectFull[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // 1️⃣ Get all projects
+        const projectsRes = await onboardingAPI.getProjects(); // returns array of project objects
+        console.log('Projects fetched:', projectsRes);
+        const projectsData = projectsRes.data.projects; 
+
+        // 2️⃣ For each project, fetch requirements, milestones, client info in parallel
+        // const fullProjects = await Promise.all(
+        //   projectsData.map(async (proj: any) => {
+        //     const [reqRes, milestonesRes, clientRes] = await Promise.all([
+        //       onboardingAPI.getRequirements(proj.id),
+        //       onboardingAPI.getMilestones(proj.id),
+        //       onboardingAPI.getClient(proj.id),
+        //     ]);
+
+        //     return {
+        //       ...proj,
+        //       requirements: reqRes.data.requirements,
+        //       milestones: milestonesRes.data.milestones,
+        //       clientInfo: clientRes.data.client,
+        //       tasks: proj.tasks || [], // ensure tasks exist for UI
+        //     };
+        //   })
+        // );
+
+        setProjects(projectsData);
+        console.log('Full projects with details:', projectsData);
+      } catch (err: any) {
+        console.error(err);
+        setError(err?.message || "Failed to load projects");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [projects]);
 
   // Animation variants
   const pageVariants = {
@@ -135,59 +207,59 @@ export default function Dashboard() {
     { id: "profile", label: "Profile", icon: User },
   ]
 
-  const projects = [
-    {
-      id: 1,
-      name: "E-commerce Platform",
-      status: "In Progress",
-      progress: 65,
-      dueDate: "Dec 15, 2024",
-      client: "TechCorp Inc.",
-      priority: "High",
-      budget: "$15,000",
-      description: "Complete e-commerce solution with payment integration",
-      tasks: [
-        { name: "Frontend Development", completed: true },
-        { name: "Backend API", completed: true },
-        { name: "Payment Integration", completed: false },
-        { name: "Testing & Deployment", completed: false },
-      ],
-    },
-    {
-      id: 2,
-      name: "Mobile App Redesign",
-      status: "Review",
-      progress: 90,
-      dueDate: "Nov 30, 2024",
-      client: "StartupXYZ",
-      priority: "Medium",
-      budget: "$8,500",
-      description: "Complete UI/UX redesign for mobile application",
-      tasks: [
-        { name: "User Research", completed: true },
-        { name: "Wireframing", completed: true },
-        { name: "UI Design", completed: true },
-        { name: "Client Review", completed: false },
-      ],
-    },
-    {
-      id: 3,
-      name: "API Integration",
-      status: "Planning",
-      progress: 25,
-      dueDate: "Jan 10, 2025",
-      client: "Enterprise Ltd.",
-      priority: "Low",
-      budget: "$5,200",
-      description: "Third-party API integration and documentation",
-      tasks: [
-        { name: "Requirements Analysis", completed: true },
-        { name: "API Documentation", completed: false },
-        { name: "Integration Development", completed: false },
-        { name: "Testing", completed: false },
-      ],
-    },
-  ]
+  // const projects = [
+  //   {
+  //     id: 1,
+  //     name: "E-commerce Platform",
+  //     status: "In Progress",
+  //     progress: 65,
+  //     dueDate: "Dec 15, 2024",
+  //     client: "TechCorp Inc.",
+  //     priority: "High",
+  //     budget: "$15,000",
+  //     description: "Complete e-commerce solution with payment integration",
+  //     tasks: [
+  //       { name: "Frontend Development", completed: true },
+  //       { name: "Backend API", completed: true },
+  //       { name: "Payment Integration", completed: false },
+  //       { name: "Testing & Deployment", completed: false },
+  //     ],
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Mobile App Redesign",
+  //     status: "Review",
+  //     progress: 90,
+  //     dueDate: "Nov 30, 2024",
+  //     client: "StartupXYZ",
+  //     priority: "Medium",
+  //     budget: "$8,500",
+  //     description: "Complete UI/UX redesign for mobile application",
+  //     tasks: [
+  //       { name: "User Research", completed: true },
+  //       { name: "Wireframing", completed: true },
+  //       { name: "UI Design", completed: true },
+  //       { name: "Client Review", completed: false },
+  //     ],
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "API Integration",
+  //     status: "Planning",
+  //     progress: 25,
+  //     dueDate: "Jan 10, 2025",
+  //     client: "Enterprise Ltd.",
+  //     priority: "Low",
+  //     budget: "$5,200",
+  //     description: "Third-party API integration and documentation",
+  //     tasks: [
+  //       { name: "Requirements Analysis", completed: true },
+  //       { name: "API Documentation", completed: false },
+  //       { name: "Integration Development", completed: false },
+  //       { name: "Testing", completed: false },
+  //     ],
+  //   },
+  // ]
 
   const chatConversations = [
     {
@@ -348,6 +420,7 @@ export default function Dashboard() {
   const handleShowOnboarding = () => {
     // This will trigger the onboarding modal through the OnboardingChecker
     console.log("Show onboarding modal")
+    setShowModal(true)
   }
 
   const renderContent = () => {
@@ -551,179 +624,90 @@ export default function Dashboard() {
 
       case "projects":
         return (
-          <motion.div
-            className="space-y-8"
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-          >
-            <motion.div
-              variants={itemVariants}
-              className="flex justify-between items-center"
-            >
-              <motion.h2
-                className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                Projects
-              </motion.h2>
-              <motion.div
-                className="flex space-x-3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search projects..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64 border-gray-700 focus:border-primary/50 transition-colors duration-300"
+           <motion.div className="space-y-8" initial="hidden" animate="visible">
+      <motion.div className="flex justify-between items-center">
+        <motion.h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          Projects
+        </motion.h2>
+        <motion.div className="flex space-x-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-64 border-gray-700 focus:border-primary/50 transition-colors duration-300"
+            />
+          </div>
+          <Button variant="outline" size="sm">
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </Button>
+          <Button className="bg-gradient-to-r from-primary to-accent">
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        </motion.div>
+      </motion.div>
+
+      <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {projects.map((project, index) => (
+          <motion.div key={project.id} className="group">
+            <Card className="bg-[#0a0f1c] border-gray-800 hover:border-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/10 h-full">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-white group-hover:text-blue-300 transition-colors duration-300">
+                    {project.name}
+                  </CardTitle>
+                  <Badge
+                    variant={
+                      project.priority === "High"
+                        ? "destructive"
+                        : project.priority === "Medium"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {project.priority}
+                  </Badge>
+                </div>
+                <CardDescription className="text-gray-400">{project.client}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-400">{project.description}</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Progress</span>
+                  <span className="text-white font-medium">{project.progress}%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                  <motion.div
+                    className="bg-gradient-to-r from-primary to-accent h-3 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${project.progress}%` }}
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-700 hover:border-primary/50 transition-colors duration-300"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-                <Button
-                  onClick={handleShowOnboarding}
-                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Project
-                </Button>
-              </motion.div>
-            </motion.div>
 
-            <motion.div
-              className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-              variants={containerVariants}
-            >
-              {projects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  variants={itemVariants}
-                  whileHover={cardHoverVariants.hover}
-                  className="group"
-                >
-                  <Card className="bg-[#0a0f1c] border-gray-800 hover:border-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/10 h-full">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-white group-hover:text-blue-300 transition-colors duration-300">{project.name}</CardTitle>
-                        <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Badge
-                            variant={
-                              project.priority === "High"
-                                ? "destructive"
-                                : project.priority === "Medium"
-                                  ? "default"
-                                  : "secondary"
-                            }
-                            className="group-hover:scale-105 transition-transform duration-300"
-                          >
-                            {project.priority}
-                          </Badge>
-                        </motion.div>
-                      </div>
-                      <CardDescription className="text-gray-400">{project.client}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <p className="text-sm text-gray-400">{project.description}</p>
+                <div className="space-y-3 mt-4">
+                  <h4 className="text-sm font-medium text-white">Tasks</h4>
+                  {project.tasks.map((task, idx) => (
+                    <div key={idx} className="flex items-center space-x-2">
+                      <CheckCircle
+                        className={`h-4 w-4 ${task.completed ? "text-green-500" : "text-gray-400"}`}
+                      />
+                      <span className={`text-sm ${task.completed ? "text-gray-400 line-through" : "text-white"}`}>
+                        {task.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Progress</span>
-                          <span className="text-white font-medium">{project.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-                          <motion.div
-                            className="bg-gradient-to-r from-primary to-accent h-3 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${project.progress}%` }}
-                            transition={{ delay: 0.5 + index * 0.1, duration: 1, ease: "easeOut" }}
-                          ></motion.div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-white">Tasks</h4>
-                          {project.tasks.map((task, idx) => (
-                            <motion.div
-                              key={idx}
-                              className="flex items-center space-x-2"
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.7 + idx * 0.1 }}
-                            >
-                              <motion.div
-                                whileHover={{ scale: 1.2 }}
-                                className="cursor-pointer"
-                              >
-                                <CheckCircle
-                                  className={`h-4 w-4 ${task.completed ? "text-green-500" : "text-gray-400"}`}
-                                />
-                              </motion.div>
-                              <span
-                                className={`text-sm ${task.completed ? "text-gray-400 line-through" : "text-white"}`}
-                              >
-                                {task.name}
-                              </span>
-                            </motion.div>
-                          ))}
-                        </div>
-
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-                          <div className="space-y-1">
-                            <div className="flex items-center text-sm text-gray-400">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              {project.dueDate}
-                            </div>
-                            <div className="flex items-center text-sm text-gray-400">
-                              <DollarSign className="h-4 w-4 mr-1" />
-                              {project.budget}
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                              <Button variant="ghost" size="sm" className="hover:bg-blue-500/10 hover:text-blue-400 transition-colors duration-300">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                              <Button variant="ghost" size="sm" className="hover:bg-green-500/10 hover:text-green-400 transition-colors duration-300">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </motion.div>
-                          </div>
-                        </div>
-
-                        <motion.div
-                          whileHover={{ scale: 1.02 }}
-                          className="pt-2"
-                        >
-                          <Badge
-                            variant="outline"
-                            className="w-fit border-gray-600 text-gray-300 hover:border-primary hover:text-primary transition-colors duration-300"
-                          >
-                            {project.status}
-                          </Badge>
-                        </motion.div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
+                {/* Milestones, requirements, client info can be rendered here */}
+              </CardContent>
+            </Card>
           </motion.div>
+        ))}
+      </motion.div>
+    </motion.div>
         )
 
       case "chat":

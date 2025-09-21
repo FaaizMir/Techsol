@@ -55,7 +55,7 @@ export default function Onboarding() {
     updateData('client', newClient)
   }
 
-  // Mutation for submitting onboarding data
+  // final submit uses onboardingAPI which attaches auth header via apiCall
   const submitMutation = useMutation({
     mutationFn: (formData: FormData) => onboardingAPI.submitData(formData),
     onSuccess: () => {
@@ -63,37 +63,80 @@ export default function Onboarding() {
       setLoading(false)
     },
     onError: (error: any) => {
-      setError(error.message || 'Failed to submit onboarding data')
+      setError(error.message || "Failed to submit onboarding data")
       setLoading(false)
     },
   })
 
   const handleSubmit = () => {
+    // Ensure code only runs in the browser (avoid SSR issues)
+    const token = typeof window !== "undefined"
+      ? (localStorage.getItem("token") || localStorage.getItem("authToken"))
+      : null
+
+    if (!token) {
+      // Inform UI that token is missing and abort submit
+      setError("Authentication token missing. Please login.")
+      return
+    }
+
     setLoading(true)
     const formData = new FormData()
 
     // Add project data
-    formData.append('project', JSON.stringify(project))
+    formData.append("project", JSON.stringify(project))
 
     // Add requirements
-    formData.append('requirements', JSON.stringify({ notes: requirements.notes }))
+    formData.append("requirements", JSON.stringify({ notes: requirements.notes }))
 
     // Add milestones
-    formData.append('milestones', JSON.stringify(milestones))
+    formData.append("milestones", JSON.stringify(milestones))
 
     // Add client data
-    formData.append('client', JSON.stringify(client))
+    formData.append("client", JSON.stringify(client))
 
     // Add files
-    requirements.files.forEach((file: File, index: number) => {
-      formData.append(`files`, file)
+    requirements.files.forEach((file: File) => {
+      formData.append("files", file)
     })
 
+    // Pass both formData and token to the mutation so it can set Authorization header
     submitMutation.mutate(formData)
   }
 
+  // Replace simple nextStep with server-backed step save
+  const handleNext = async () => {
+    try {
+      setLoading(true)
+      if (currentStep === 0) {
+        // Save project
+        await onboardingAPI.saveProject(project)
+      } else if (currentStep === 1) {
+        // Save requirements + files as multipart
+        const fd = new FormData()
+        fd.append('notes', requirements.notes || '')
+        if (requirements.files && requirements.files.length > 0) {
+          requirements.files.forEach((file: File) => fd.append('files', file))
+        }
+        await onboardingAPI.saveRequirements(fd)
+      } else if (currentStep === 2) {
+        // Save milestones
+        await onboardingAPI.saveMilestones(milestones)
+      } else if (currentStep === 3) {
+        // Save client
+        await onboardingAPI.saveClient(client)
+      }
+
+      // advance step locally after successful save
+      setCurrentStep(Math.min(currentStep + 1, steps.length - 1))
+    } catch (err: any) {
+      setError(err?.message || 'Failed to save step data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Handlers
-  const nextStep = () => setCurrentStep(Math.min(currentStep + 1, steps.length - 1))
   const prevStep = () => setCurrentStep(Math.max(currentStep - 1, 0))
   const addMilestone = () => {
     const newMilestones = [...milestones, { title: "", deliverable: "", deadline: "", amount: "" }]
@@ -479,7 +522,7 @@ export default function Onboarding() {
           {/* Enhanced Navigation */}
           <div className="flex justify-between items-center mt-12 pt-8 border-t border-slate-600">
             <div>
-              {currentStep > 0 && currentStep < 5 && (
+              {currentStep > 0 && (
                 <button
                   onClick={prevStep}
                   className="px-6 py-3 bg-slate-700 text-slate-200 border border-slate-600 rounded-xl hover:bg-slate-600 transition-all duration-200 font-medium shadow-sm"
@@ -496,7 +539,7 @@ export default function Onboarding() {
             <div>
               {currentStep < 4 && (
                 <button
-                  onClick={nextStep}
+                  onClick={handleNext}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
                 >
                   Next →
