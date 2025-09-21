@@ -2,9 +2,6 @@
 
 import { Suspense } from "react"
 import Dashboard from "../(protected)/dashboard/page"
-import OnboardingModal from '@/components/common/onboarding-modal'
-import { useOnboarding } from "@/hooks/use-onboarding"
-import ProtectedRoute from '@/components/common/ProtectedRoute'
 
 function LoadingScreen() {
   return (
@@ -18,18 +15,10 @@ function LoadingScreen() {
 }
 
 function MainApp() {
-  const { isComplete, showModal, completeOnboarding, closeModal, startNewProject } = useOnboarding()
-
   return (
-
-    <ProtectedRoute>
     <div className="dark min-h-screen">
       <Dashboard />
-            {/* <Dashboard onShowOnboarding={handleShowOnboarding} /> */}
-
-      {showModal && <OnboardingModal onComplete={completeOnboarding} onClose={closeModal} />}
     </div>
-    </ProtectedRoute>
   )
 }
 

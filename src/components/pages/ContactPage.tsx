@@ -3,8 +3,8 @@
 // import { Card } from "../components/Card"
 // import { Button } from "../components/Button"
 
-import Button from "@/components/common/Button";
-import Card from "@/components/common/Card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function ContactPage() {
   return (

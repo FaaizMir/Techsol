@@ -2,8 +2,8 @@
 
 import { Code, Cloud, Network, Shield, Palette, CheckCircle, ArrowRight, Brain } from "lucide-react"
 import Link from "next/link"
-import Button from "@/components/common/Button"
-import Card from "@/components/common/Card"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
 export default function ServicesPage() {
   const services = [

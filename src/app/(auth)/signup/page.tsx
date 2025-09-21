@@ -32,7 +32,7 @@ export default function Signup() {
       await signup(email, password)
       setMessage("Account created successfully! Redirecting to login...")
     } catch (err: any) {
-      setMessage(err.response?.data?.error || "Signup failed")
+      setMessage(err.message || "Signup failed")
     } finally {
       setIsLoading(false)
     }

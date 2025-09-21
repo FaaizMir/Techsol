@@ -7,15 +7,23 @@ import OnboardingModal from '@/components/common/onboarding-modal'
 export default function OnboardingChecker() {
   const { user, isAuthenticated, updateOnboardingStatus } = useAuth()
   const [showModal, setShowModal] = useState(false)
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated && user && !user.isOnboardingCompleted) {
+    // Only show onboarding modal if user is authenticated, user data is loaded, onboarding is NOT completed, and we haven't marked it as completed locally
+    if (isAuthenticated && user && !user.isOnboardingCompleted && !onboardingCompleted) {
       setShowModal(true)
+    } else {
+      setShowModal(false)
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, onboardingCompleted])
 
   const handleOnboardingComplete = () => {
+    // Mark as completed locally first to prevent re-showing
+    setOnboardingCompleted(true)
     setShowModal(false)
+
+    // Then update the global state
     updateOnboardingStatus(true)
   }
 
@@ -24,7 +32,10 @@ export default function OnboardingChecker() {
     setShowModal(false)
   }
 
-  if (!showModal) return null
+  // Don't render anything if onboarding is completed (either locally or globally) or user is not authenticated
+  if (!isAuthenticated || !user || user.isOnboardingCompleted || onboardingCompleted || !showModal) {
+    return null
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

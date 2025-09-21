@@ -2,7 +2,7 @@
 
 // import { Card } from "../components/Card"
 import Link from "next/link"
-import Card from "@/components/common/Card"
+import { Card } from "@/components/ui/card"
 
 export default function PortfolioPage() {
   const projects = [
