@@ -5,6 +5,10 @@ import { CheckCircle, Upload, Plus, FileText, User, CreditCard, ClipboardList, X
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useOnboarding } from "@/hooks/use-onboarding"
 import { useAuthStore } from '@/lib/stores/auth-store'
+import { onboardingAPI } from "@/lib/api"
+import { ro } from "date-fns/locale"
+import { useRouter } from "next/navigation"
+
 
 interface OnboardingModalProps {
   onComplete: () => void
@@ -12,10 +16,13 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ onComplete, onClose }: OnboardingModalProps) {
-  const { data, currentStep, setCurrentStep, updateData } = useOnboarding()
+    const router = useRouter()   
+
+  const { data, currentStep, setCurrentStep, updateData ,showModal, setShowModal } = useOnboarding()
   const { updateOnboardingStatus } = useAuthStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+const [projectId, setProjectId] = useState<number | null>(null)
 
   const steps = [
     { title: "Project Details", icon: ClipboardList },
@@ -32,11 +39,91 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
     setLocalStep(currentStep)
   }, [currentStep])
 
+  // Reset onboarding store on modal mount so every user sees a fresh modal.
+  // This prevents state left by a previous user from appearing for the next user.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    // initial empty structures
+    const emptyProject = { title: "", description: "", category: "", deadline: "" }
+    const emptyRequirements = { notes: "", files: [] as File[] }
+    const emptyMilestones: any[] = []
+    const emptyClient = { name: "", email: "", company: "", country: "" }
+
+    updateData("project", emptyProject)
+    updateData("requirements", emptyRequirements)
+    updateData("milestones", emptyMilestones)
+    updateData("client", emptyClient)
+    setCurrentStep(0)
+    setLocalStep(0)
+    // run only on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Guard: reset final step when no data — run when localStep or data changes
+  useEffect(() => {
+    if (localStep === steps.length - 1) {
+      const hasProject = !!(data.project && (data.project.title || data.project.description))
+      const hasClient = !!(data.client && (data.client.name || data.client.email))
+      if (!hasProject && !hasClient) {
+        setLocalStep(0)
+        setCurrentStep(0)
+      }
+    }
+  }, [localStep, data, setCurrentStep])
+
   // Handlers
-  const nextStep = () => {
+  // Replaces the simple nextStep with an async handler that persists the current step via onboardingAPI,
+  // then advances the step on success.
+  const handleNext = async () => {
+    setSubmitError(null)
+    setIsSubmitting(true)
+    try {
+      // Call the relevant API for the current step
+      if (localStep === 0) {
+        // Project details
+       const res :any= await onboardingAPI.saveProject(data.project)
+  setProjectId(res.data.project.id)   
+   } else if (localStep === 1) {
+        // Requirements + files - build FormData (api handles FormData)
+       const fd = new FormData()
+fd.append("notes", data.requirements?.notes || "")
+
+if (data.requirements?.files && data.requirements.files.length > 0) {
+  data.requirements.files.forEach((file: File) => {
+    fd.append("files", file)   // 👈 no index, just "files"
+  })
+}
+
+  await onboardingAPI.saveRequirements(projectId, fd)
+
+      } else if (localStep === 2) {
+        // Milestones
+        await onboardingAPI.saveMilestones(projectId, data.milestones)
+      } else if (localStep === 3) {
+        // Client info
+        await onboardingAPI.saveClient(projectId,data.client)
+      } else if (localStep === 4) {
+        // Generate/refresh the document preview before moving to submit step
+        // await onboardingAPI.review(projectId, data)
+        //navigate to next step
+       
+      // Advance UI step only after successful API call
+     
+      
+      }
+        // ✅ Always advance UI step after successful API call
     const newStep = Math.min(localStep + 1, steps.length - 1)
     setLocalStep(newStep)
     setCurrentStep(newStep)
+
+
+    } catch (err: any) {
+      setSubmitError(err?.message || "Failed to save step. Please try again.")
+      console.error("Step save error:", err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const prevStep = () => {
@@ -50,73 +137,55 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
     updateData("milestones", newMilestones)
   }
 
-const handleSubmit = async () => {
-  setIsSubmitting(true)
-  setSubmitError(null)
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+    setShowModal(false)
 
-  try {
-    // Prepare the data for submission
-    const formData = new FormData()
+    try {
+      // Prepare the data for submission
+      const formData = new FormData()
 
-    // Add project data
-    formData.append('projectTitle', data.project?.title || '')
-    formData.append('projectCategory', data.project?.category || '')
-    formData.append('projectDescription', data.project?.description || '')
-    formData.append('projectDeadline', data.project?.deadline || '')
+      // Add project data
+      formData.append('projectTitle', data.project?.title || '')
+      formData.append('projectCategory', data.project?.category || '')
+      formData.append('projectDescription', data.project?.description || '')
+      formData.append('projectDeadline', data.project?.deadline || '')
 
-    // Add client data
-    formData.append('clientName', data.client?.name || '')
-    formData.append('clientEmail', data.client?.email || '')
-    formData.append('clientCompany', data.client?.company || '')
-    formData.append('clientCountry', data.client?.country || '')
+      // Add client data
+      formData.append('clientName', data.client?.name || '')
+      formData.append('clientEmail', data.client?.email || '')
+      formData.append('clientCompany', data.client?.company || '')
+      formData.append('clientCountry', data.client?.country || '')
 
-    // Add requirements
-    formData.append('requirementsNotes', data.requirements?.notes || '')
+      // Add requirements
+      formData.append('requirementsNotes', data.requirements?.notes || '')
 
-    // Add files if any
-    if (data.requirements?.files && data.requirements.files.length > 0) {
-      data.requirements.files.forEach((file: File, index: number) => {
-        formData.append(`files[${index}]`, file)
-      })
-    }
-
-    // Add milestones as JSON string
-    formData.append('milestones', JSON.stringify(data.milestones || []))
-
-    // Get token from localStorage
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
-
-    // Send request to backend
-    const response = await fetch('http://localhost:4000/api/onboarding/onboardingdata', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': `Bearer ${token}` // <-- send token for auth middleware
+      // Add files if any
+      if (data.requirements?.files && data.requirements.files.length > 0) {
+        data.requirements.files.forEach((file: File, index: number) => {
+          formData.append(`files[${index}]`, file)
+        })
       }
-    })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Failed to submit onboarding data')
+      // Add milestones as JSON string
+      formData.append('milestones', JSON.stringify(data.milestones || []))
+
+      // Use onboardingAPI.submitData (api.ts attaches token automatically)
+      await onboardingAPI.submitData(formData)
+
+      // Update user onboarding status in auth store
+      updateOnboardingStatus(true)
+
+      // Call the onComplete callback
+      onComplete()
+    } catch (error) {
+      console.error('Error submitting onboarding data:', error)
+      setSubmitError(error instanceof Error ? error.message : 'An error occurred while submitting')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    const result = await response.json()
-    console.log('Onboarding data submitted successfully:', result)
-
-    // Update user onboarding status in auth store
-    updateOnboardingStatus(true)
-
-    // Call the onComplete callback
-    onComplete()
-  } catch (error) {
-    console.error('Error submitting onboarding data:', error)
-    setSubmitError(error instanceof Error ? error.message : 'An error occurred while submitting')
-  } finally {
-    setIsSubmitting(false)
   }
-}
-
-
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -128,8 +197,8 @@ const handleSubmit = async () => {
               <h1 className="text-2xl font-bold text-card-foreground">Project Onboarding</h1>
               <p className="text-muted-foreground">Complete your project setup in just a few simple steps</p>
             </div>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
               aria-label="Close modal"
             >
@@ -153,13 +222,20 @@ const handleSubmit = async () => {
                 return (
                   <div key={index} className="relative z-10 flex flex-col items-center group">
                     <motion.div
+                      onClick={() => {
+                        // allow navigating to current or previous steps
+                        if (index <= localStep) {
+                          setLocalStep(index)
+                          setCurrentStep(index)
+                        }
+                      }}
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 border-2
                         ${
                           index === localStep
                             ? "bg-primary text-primary-foreground border-primary shadow-lg scale-110"
                             : index < localStep
                               ? "bg-green-500 text-white border-green-500 shadow-md"
-                              : "bg-card text-muted-foreground border-border hover:border-muted-foreground"
+                              : "bg-card text-muted-foreground border-border hover:border-muted-foreground cursor-pointer"
                         }
                       `}
                       whileHover={{ scale: index <= localStep ? 1.1 : 1.05 }}
@@ -208,13 +284,21 @@ const handleSubmit = async () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-card-foreground">Category</label>
-                    <input
-                      type="text"
-                      placeholder="e.g., Web Development, Design"
+                    <select
                       value={data.project?.category || ""}
                       onChange={(e) => updateData("project", { ...data.project, category: e.target.value })}
-                      className="w-full p-3 border border-border rounded-lg text-card-foreground placeholder-muted-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
-                    />
+                      className="w-full p-3 border border-border rounded-lg text-card-foreground bg-input focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
+                    >
+                      <option value="" disabled>
+                        Select a category
+                      </option>
+                      <option value="web-development">Web Development</option>
+                      <option value="mobile-app">Mobile App</option>
+                      <option value="ai-ml">AI / ML</option>
+                      <option value="cloud-services">Cloud Services</option>
+                      <option value="consulting">Consulting</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -490,20 +574,23 @@ const handleSubmit = async () => {
                   <h2 className="text-2xl font-bold text-card-foreground mb-2">Order Submitted Successfully!</h2>
                   <p className="text-muted-foreground">Your project has been submitted and is now being reviewed.</p>
                 </div>
+
                 <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
                   <p className="text-primary font-medium">What happens next?</p>
                   <p className="text-muted-foreground text-sm mt-1">
                     You'll receive a confirmation email shortly and can track your project progress in the dashboard.
                   </p>
                 </div>
+
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting }
                   className="px-8 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isSubmitting ? 'Submitting...' : 'Go to Dashboard'}
                 </button>
+
                 {submitError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
                     {submitError}
@@ -512,12 +599,14 @@ const handleSubmit = async () => {
               </div>
             )}
 
+            {/* Navigation */}
             <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
               <div>
-                {localStep > 0 && localStep < 5 && (
+                {localStep > 0 && (
                   <button
                     onClick={prevStep}
                     className="px-6 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
+                    disabled={isSubmitting}
                   >
                     ← Back
                   </button>
@@ -531,16 +620,18 @@ const handleSubmit = async () => {
               <div>
                 {localStep < 4 && (
                   <button
-                    onClick={nextStep}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 font-semibold"
+                    onClick={handleNext}
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next →
                   </button>
                 )}
                 {localStep === 4 && (
                   <button
-                    onClick={nextStep}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-200 font-semibold"
+                    onClick={handleNext}
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Submit Order →
                   </button>

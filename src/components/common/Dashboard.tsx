@@ -40,8 +40,8 @@ export default function Dashboard({ onShowOnboarding }: DashboardProps) {
 
   const projects = [
     { id: 1, name: "Project Alpha", client: "Client A", status: "In Progress", progress: 75 },
-    { id: 2, name: "Project Beta", client: "Client B", status: "Review", progress: 50 },
-    { id: 3, name: "Project Gamma", client: "Client C", status: "Completed", progress: 100 },
+    // { id: 2, name: "Project Beta", client: "Client B", status: "Review", progress: 50 },
+    // { id: 3, name: "Project Gamma", client: "Client C", status: "Completed", progress: 100 },
   ]
 
   const chatConversations = [

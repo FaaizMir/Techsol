@@ -126,6 +126,7 @@ export function useOnboarding() {
     currentStep: step,
     data,
     showModal,
+    setShowModal,
     isLoading,
 
     // Actions
