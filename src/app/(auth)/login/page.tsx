@@ -25,7 +25,7 @@ export default function Page() {
       await login(email, password)
       setMessage("Login successful! Redirecting...")
     } catch (err: any) {
-      setMessage(err.response?.data?.error || "Login failed")
+      setMessage(err.message || "Login failed")
     } finally {
       setIsLoading(false)
     }

@@ -6,8 +6,8 @@ import { ArrowRight,Brain, Code, Cloud, Network, Palette, Shield, Users, Chevron
 import Link from "next/link"
 import { motion, useScroll, useTransform } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import Button from "@/components/common/Button"
-import Card from "@/components/common/Card"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import AnimatedSection from "@/components/common/AnimatedSection"
 import { AnimatedTitle, AnimatedSubtitle, AnimatedItem, AnimatedFadeIn, AnimatedScaleIn } from "@/components/common/AnimatedElements"
 import ParallaxElement from "@/components/common/ParallaxElement"
@@ -241,7 +241,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service, index) => (
                 <AnimatedItem key={index} index={index} className="h-full">
-                  <Card className="text-center h-full transform transition-transform duration-500 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,255,255,0.3)]">
+                  <Card className="text-center h-full transform transition-transform duration-500 hover:shadow-[0_0_15px_rgba(0,255,255,0.3)]">
                     <div className="text-cyan-400 mb-4 flex justify-center">{service.icon}</div>
                     <h3 className="text-xl font-semibold mb-3 text-white">{service.title}</h3>
                     <p className="text-gray-300">{service.description}</p>
@@ -273,7 +273,6 @@ export default function HomePage() {
                   <Card className="h-full transform transition-all duration-500 hover:translate-y-[-10px]">
                     <div className="overflow-hidden rounded-lg mb-4">
                       <motion.img
-                        whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.5 }}
                         src={project.image || "/placeholder.svg"}
                         alt={project.title}

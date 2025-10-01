@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/components/providers/AuthProvider"
-import Button from "@/components/common/Button"
+import { Button } from "@/components/ui/button"
 import { LogOut, Home, User } from "lucide-react"
 import Link from "next/link"
 

@@ -44,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiCall<{ token: string; user: User }>('/auth/login', 'POST', { email, password })
 
+      // Check if the response contains an error
+      if ('error' in response) {
+        throw new Error(String(response.error))
+      }
+
       if (response.token) {
         localStorage.setItem('token', response.token)
         setAuth(response.token, response.user)
@@ -53,6 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           router.push('/dashboard')
         }
+      } else {
+        throw new Error('Login failed: No token received')
       }
     } catch (error) {
       throw error
@@ -62,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (email: string, password: string) => {
     try {
       const response = await apiCall<{ message: string; user: User }>('/auth/signup', 'POST', { email, password })
+
+      // Check if the response contains an error
+      if ('error' in response) {
+        throw new Error(String(response.error))
+      }
 
       router.push('/login')
     } catch (error) {
@@ -83,9 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const response = await apiCall<{ valid: boolean; user: User }>('/auth/check-auth', 'GET', undefined, {
-        'Authorization': `Bearer ${token}`
-      })
+      const response = await apiCall<{ valid: boolean; user: User }>('/protected/check-auth', 'GET')
 
       if (response.valid && response.user) {
         setAuth(token, response.user)

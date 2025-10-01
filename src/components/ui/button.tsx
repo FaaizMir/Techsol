@@ -37,17 +37,44 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  icon?: React.ReactNode
+  iconPosition?: "left" | "right"
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, icon, iconPosition = "left", ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+
+    // Extract children and separate icons from text content
+    const children = React.Children.toArray(props.children)
+    const hasDirectIconChildren = children.some(child =>
+      React.isValidElement(child) && child.type === 'svg'
+    )
+
+    // If using icon prop, use that approach
+    if (icon) {
+      return (
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {iconPosition === "left" && icon}
+          {props.children}
+          {iconPosition === "right" && icon}
+        </Comp>
+      )
+    }
+
+    // If icons are direct children, render them as-is
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
-      />
+      >
+        {props.children}
+      </Comp>
     )
   }
 )
