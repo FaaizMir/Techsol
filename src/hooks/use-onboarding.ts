@@ -330,9 +330,29 @@ export function useOnboarding() {
 
     try {
       setError(null)
+      
+      // Sanitize client data - ensure required fields are present and clean optional fields
+      const sanitizedClient = {
+        name: clientData?.name?.trim() || "",
+        email: clientData?.email?.trim() || "",
+        country: clientData?.country?.trim() || "",
+        company: clientData?.company?.trim() || undefined, // Send undefined instead of empty string for optional field
+      }
+
+      // Validate required fields
+      if (!sanitizedClient.name) {
+        throw new Error("Client name is required")
+      }
+      if (!sanitizedClient.email) {
+        throw new Error("Client email is required")
+      }
+      if (!sanitizedClient.country) {
+        throw new Error("Client country is required")
+      }
+
       const result = await saveClientMutation.mutateAsync({
         projectId,
-        client: clientData
+        client: sanitizedClient
       })
 
       if (result.success) {

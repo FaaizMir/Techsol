@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { CheckCircle, Upload, FileText, User, CreditCard, ClipboardList, X, Loader2, Sparkles, Info } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useOnboarding } from "@/hooks/use-onboarding"
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { validateProjectDetails, validateClientInfo, validatePaymentPlan } from "@/lib/validation/onboardingSchemas"
@@ -19,9 +19,10 @@ import StepIntro from "@/components/onboarding/steps/StepIntro"
 interface OnboardingModalProps {
   onComplete: () => void
   onClose: () => void
+  open?: boolean
 }
 
-export default function OnboardingModal({ onComplete, onClose }: OnboardingModalProps) {
+export default function OnboardingModal({ onComplete, onClose, open = true }: OnboardingModalProps) {
 
   const {
     data,
@@ -66,13 +67,13 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
 
   // Cleanup when modal closes
   useEffect(() => {
-    if (!showModal) {
+    if (!open) {
       // Reset local state when modal closes
       setIsSubmitting(false)
       setSubmitError(null)
       setValidationErrors({})
     }
-  }, [showModal])
+  }, [open])
 
   // Reset onboarding store on modal mount so every user sees a fresh modal.
   // This prevents state left by a previous user from appearing for the next user.
@@ -155,7 +156,6 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
   const handleSubmit = async () => {
     setIsSubmitting(true)
     setSubmitError(null)
-    setShowModal(false) // Hide modal initially
 
     try {
       await completeOnboardingProcess()
@@ -163,23 +163,20 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
       // Update user onboarding status in auth store
       updateOnboardingStatus(true)
 
-      // Show success message and close after 5 seconds
+      // Show success message
       setIsSubmitted(true)
-      setShowModal(true) // Re-show modal with success message
 
       // Call the onComplete callback
       onComplete()
 
       // Auto-close after 5 seconds
       setTimeout(() => {
-        setShowModal(false)
-        onClose() // Also call onClose to ensure proper cleanup
+        onClose() // Call onClose to ensure proper cleanup
       }, 5000)
 
     } catch (error) {
       console.error('Error completing onboarding:', error)
       setSubmitError(error instanceof Error ? error.message : 'An error occurred while completing onboarding')
-      setShowModal(true) // Re-show modal on error
     } finally {
       setIsSubmitting(false)
     }
@@ -227,7 +224,7 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
   }
 
   return (
-    <Dialog open={showModal} onOpenChange={onClose} modal={true}>
+    <Dialog open={open} onOpenChange={onClose} modal={true}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden bg-slate-800 border-slate-700 p-0 flex flex-col" style={{ scrollbarWidth: 'none' }}>
         <style>{`
           ::-webkit-scrollbar {
@@ -241,15 +238,6 @@ export default function OnboardingModal({ onComplete, onClose }: OnboardingModal
               <h1 className="text-lg font-bold text-slate-100 leading-tight">Project Onboarding</h1>
               <p className="text-xs text-slate-400 leading-tight">Complete your project setup in just a few simple steps</p>
             </div>
-            <DialogClose asChild>
-              <button
-                className="p-1 hover:bg-slate-700 rounded-md transition-colors duration-200 group"
-                aria-label="Close modal"
-                disabled={isSubmitted}
-              >
-                <X className="h-4 w-4 text-slate-400 group-hover:text-slate-200" />
-              </button>
-            </DialogClose>
           </div>
         </DialogHeader>
 

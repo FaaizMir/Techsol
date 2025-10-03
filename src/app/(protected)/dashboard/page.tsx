@@ -1,6 +1,7 @@
 "use client"
 
 import { useState,useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { useOnboarding } from "@/hooks/use-onboarding"
 import { onboardingAPI } from "@/lib/api"
+import { useAuthStore } from "@/lib/stores/auth-store"
 
 // Import dashboard hooks
 import { useDashboardStats, useRecentProjects, useRecentMessages } from "@/hooks/use-dashboard"
@@ -21,11 +23,10 @@ import ProjectsSection from "@/components/dashboard/ProjectsSection"
 import ChatSection from "@/components/dashboard/ChatSection"
 import DocumentsSection from "@/components/dashboard/DocumentsSection"
 import ProfileSection from "@/components/dashboard/ProfileSection"
+import OnboardingModal from "@/components/common/onboarding-modal"
 
 // Import new enhanced components
 import ProjectTimeline from "@/components/dashboard/ProjectTimeline"
-
-
 import {
   LayoutDashboard,
   MessageSquare,
@@ -50,6 +51,7 @@ import {
   Video,
   Paperclip,
   Activity,
+  Users,
 } from "lucide-react"
 
 interface ProjectFull {
@@ -68,7 +70,9 @@ interface ProjectFull {
   clientInfo: any;
 }
 export default function Dashboard() {
-    const { showModal, setShowModal } = useOnboarding()
+  const { showModal, setShowModal } = useOnboarding()
+  const { clearAuth } = useAuthStore()
+  const router = useRouter()
 
   const [activeSection, setActiveSection] = useState("dashboard")
   const [searchQuery, setSearchQuery] = useState("")
@@ -227,6 +231,25 @@ export default function Dashboard() {
     setShowModal(true)
   }
 
+  const handleNavigateToProjects = () => {
+    setActiveSection("projects")
+  }
+
+  const handleLogout = () => {
+    // Clear authentication state
+    clearAuth()
+    
+    // Clear any tokens from localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token')
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('auth-storage')
+    }
+    
+    // Redirect to login page
+    router.push('/login')
+  }
+
   const renderContent = () => {
     const isAnyLoading = statsLoading || recentProjectsLoading || recentMessagesLoading ||
                         allProjectsLoading || conversationsLoading
@@ -244,9 +267,15 @@ export default function Dashboard() {
           recentProjects={recentProjects}
           recentMessages={recentMessages}
           onShowOnboarding={handleShowOnboarding}
+          onNavigateToProjects={handleNavigateToProjects}
         />
       case "projects":
-        return <ProjectsSection projects={projects} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        return <ProjectsSection 
+          projects={projects} 
+          searchQuery={searchQuery} 
+          setSearchQuery={setSearchQuery}
+          onShowOnboarding={handleShowOnboarding}
+        />
       case "timeline":
         return <ProjectTimeline />
       case "chat":
@@ -259,7 +288,7 @@ export default function Dashboard() {
           onSendMessage={handleSendMessage}
         />
       case "documents":
-        return <DocumentsSection documents={[]} />
+        return <DocumentsSection />
       case "profile":
         return <ProfileSection />
       default:
@@ -353,6 +382,7 @@ export default function Dashboard() {
             whileTap={{ scale: 0.98 }}
           >
             <Button
+              onClick={handleLogout}
               variant="ghost"
               className="w-full justify-start text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 border border-transparent hover:border-red-500/20"
             >
@@ -387,6 +417,18 @@ export default function Dashboard() {
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* Onboarding Modal */}
+      {showModal && (
+        <OnboardingModal
+          open={showModal}
+          onComplete={() => {
+            setShowModal(false)
+            // Optionally refresh projects or show success message
+          }}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   )
 }
