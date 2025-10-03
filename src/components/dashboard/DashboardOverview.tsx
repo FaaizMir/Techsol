@@ -25,6 +25,7 @@ interface DashboardOverviewProps {
   recentProjects: any[]
   recentMessages: any[]
   onShowOnboarding: () => void
+  onNavigateToProjects: () => void
 }
 
 export default function DashboardOverview({
@@ -33,7 +34,8 @@ export default function DashboardOverview({
   stats,
   recentProjects,
   recentMessages,
-  onShowOnboarding
+  onShowOnboarding,
+  onNavigateToProjects
 }: DashboardOverviewProps) {
 
   return (
@@ -51,12 +53,12 @@ export default function DashboardOverview({
               <Button
                 onClick={onShowOnboarding}
                 variant="outline"
-                className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 bg-transparent"
+                className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 hover:text-cyan-200 bg-transparent transition-colors"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
-              <Button variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-700/50">
+              <Button variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
                 <Bell className="h-4 w-4" />
               </Button>
             </div>
@@ -202,14 +204,15 @@ export default function DashboardOverview({
             <Button
               onClick={onShowOnboarding}
               variant="outline"
-              className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 bg-transparent h-20 flex-col"
+              className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/10 hover:text-cyan-200 bg-transparent h-20 flex-col transition-colors"
             >
               <Plus className="h-6 w-6 mb-2" />
               Start New Project
             </Button>
             <Button
+              onClick={onNavigateToProjects}
               variant="outline"
-              className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 bg-transparent h-20 flex-col"
+              className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 hover:text-blue-200 bg-transparent h-20 flex-col transition-colors"
             >
               <FolderOpen className="h-6 w-6 mb-2" />
               View All Projects
