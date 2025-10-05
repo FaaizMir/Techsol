@@ -2,203 +2,26 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { onboardingAPI } from '@/lib/api'
-
-// API Response Types
-interface ApiResponse<T = any> {
-  success: boolean
-  data?: T
-  error?: {
-    code: string
-    message: string
-    details?: any
-  }
-}
-
-interface StartOnboardingResponse {
-  projectId: number
-  currentStep: number
-  message: string
-}
-
-interface SaveProjectResponse {
-  project: {
-    id: number
-    title: string
-    description: string
-    category: string
-    deadline: string
-    status: string
-    userId: number
-    createdAt: string
-    updatedAt: string
-  }
-  nextStep: number
-}
-
-interface SaveRequirementsResponse {
-  requirements: {
-    id: number
-    projectId: number
-    notes: string
-    files: Array<{
-      filename: string
-      originalName: string
-      mimetype: string
-      size: number
-      url: string
-      uploadedAt: string
-    }>
-    createdAt: string
-    updatedAt: string
-  }
-  nextStep: number
-}
-
-interface SaveMilestonesResponse {
-  milestones: Array<{
-    id: number
-    projectId: number
-    title: string
-    deliverable: string
-    deadline: string
-    amount: string
-    status: string
-    order: number
-    createdAt: string
-    updatedAt: string
-  }>
-  nextStep: number
-}
-
-interface SaveClientResponse {
-  client: {
-    id: number
-    projectId: number
-    name: string
-    email: string
-    company: string
-    country: string
-    phone?: string
-    createdAt: string
-    updatedAt: string
-  }
-  nextStep: number
-}
-
-interface ReviewResponse {
-  project: any
-  requirements: any
-  milestones: any[]
-  client: any
-  nextStep: number
-}
-
-interface CompleteResponse {
-  message: string
-  project: {
-    id: number
-    status: string
-  }
-}
-
-interface ProgressResponse {
-  currentStep: number
-  isCompleted: boolean
-  completedSteps: number[]
-  lastUpdated: string
-  projectId: number
-}
-
-interface OnboardingDataResponse {
-  project: any
-  requirements: any
-  milestones: any[]
-  client: any
-  progress: {
-    currentStep: number
-    isCompleted: boolean
-  }
-}
-
-interface UpdateStepResponse {
-  message: string
-  currentStep: number
-}
-
-interface ProjectsResponse {
-  projects: Array<{
-    id: number
-    title: string
-    description: string
-    category: string
-    deadline: string
-    status: string
-    userId: number
-    createdAt: string
-    updatedAt: string
-  }>
-}
-
-interface ProjectResponse {
-  project: {
-    id: number
-    title: string
-    description: string
-    category: string
-    deadline: string
-    status: string
-    userId: number
-    createdAt: string
-    updatedAt: string
-  }
-}
-
-interface RequirementsResponse {
-  requirements: {
-    id: number
-    projectId: number
-    notes: string
-    files: Array<{
-      filename: string
-      originalName: string
-      mimetype: string
-      size: number
-      url: string
-      uploadedAt: string
-    }>
-    createdAt: string
-    updatedAt: string
-  }
-}
-
-interface MilestonesResponse {
-  milestones: Array<{
-    id: number
-    projectId: number
-    title: string
-    deliverable: string
-    deadline: string
-    amount: string
-    status: string
-    order: number
-    createdAt: string
-    updatedAt: string
-  }>
-}
-
-interface ClientResponse {
-  client: {
-    id: number
-    projectId: number
-    name: string
-    email: string
-    company: string
-    country: string
-    phone?: string
-    createdAt: string
-    updatedAt: string
-  }
-}
+import type {
+  StartOnboardingRequest,
+  SaveProjectRequest,
+  SaveMilestonesRequest,
+  SaveClientRequest,
+  ReviewRequest,
+  CompleteRequest,
+  UpdateStepRequest,
+  ApiResponse,
+  StartOnboardingResponse,
+  SaveProjectResponse,
+  SaveRequirementsResponse,
+  SaveMilestonesResponse,
+  SaveClientResponse,
+  ReviewResponse,
+  CompleteResponse,
+  ProgressData,
+  OnboardingDataResponse,
+  UpdateStepResponse,
+} from '@/types/onboarding'
 
 // Query keys
 export const onboardingKeys = {
@@ -217,13 +40,17 @@ export function useStartOnboarding() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (userId: number) => onboardingAPI.start({ userId }) as Promise<ApiResponse<StartOnboardingResponse>>,
-    onSuccess: (data) => {
-      if (data.success && data.data?.projectId) {
+    mutationFn: (data: StartOnboardingRequest) => 
+      onboardingAPI.start(data),
+    onSuccess: (response, variables) => {
+      if (response.success && response.data) {
         // Invalidate progress queries
-        queryClient.invalidateQueries({ queryKey: onboardingKeys.all })
+        queryClient.invalidateQueries({ queryKey: onboardingKeys.progress(variables.userId) })
       }
     },
+    onError: (error: any) => {
+      console.error('Start onboarding error:', error)
+    }
   })
 }
 
@@ -232,16 +59,25 @@ export function useSaveProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { projectId?: number; title: string; description: string; category: string; deadline: string }) =>
-      onboardingAPI.saveProject(data) as Promise<ApiResponse<SaveProjectResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success && data.data?.project?.id) {
+    mutationFn: (data: SaveProjectRequest) =>
+      onboardingAPI.saveProject(data),
+    onSuccess: (response, variables) => {
+      if (response.success && response.data?.project?.id) {
         // Update the onboarding data cache
         queryClient.invalidateQueries({
-          queryKey: onboardingKeys.data(data.data.project.id)
+          queryKey: onboardingKeys.data(response.data.project.id)
         })
+        // Invalidate progress to update cache
+        if (variables.userId) {
+          queryClient.invalidateQueries({
+            queryKey: onboardingKeys.progress(variables.userId)
+          })
+        }
       }
     },
+    onError: (error: any) => {
+      console.error('Save project error:', error)
+    }
   })
 }
 
@@ -251,15 +87,22 @@ export function useSaveRequirements() {
 
   return useMutation({
     mutationFn: ({ projectId, formData }: { projectId: number; formData: FormData }) =>
-      onboardingAPI.saveRequirements(projectId, formData) as Promise<ApiResponse<SaveRequirementsResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success) {
+      onboardingAPI.saveRequirements(projectId, formData),
+    onSuccess: (response, variables) => {
+      if (response.success) {
         // Update the onboarding data cache
         queryClient.invalidateQueries({
           queryKey: onboardingKeys.data(variables.projectId)
         })
+        // Invalidate requirements cache
+        queryClient.invalidateQueries({
+          queryKey: onboardingKeys.requirements(variables.projectId)
+        })
       }
     },
+    onError: (error: any) => {
+      console.error('Save requirements error:', error)
+    }
   })
 }
 
@@ -268,16 +111,23 @@ export function useSaveMilestones() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ projectId, milestones }: { projectId: number; milestones: any[] }) =>
-      onboardingAPI.saveMilestones(projectId, milestones) as Promise<ApiResponse<SaveMilestonesResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success) {
+    mutationFn: ({ projectId, data }: { projectId: number; data: SaveMilestonesRequest }) =>
+      onboardingAPI.saveMilestones(projectId, data),
+    onSuccess: (response, variables) => {
+      if (response.success) {
         // Update the onboarding data cache
         queryClient.invalidateQueries({
           queryKey: onboardingKeys.data(variables.projectId)
         })
+        // Invalidate milestones cache
+        queryClient.invalidateQueries({
+          queryKey: onboardingKeys.milestones(variables.projectId)
+        })
       }
     },
+    onError: (error: any) => {
+      console.error('Save milestones error:', error)
+    }
   })
 }
 
@@ -286,23 +136,34 @@ export function useSaveClient() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ projectId, client }: { projectId: number; client: { name: string; email: string; company?: string; country: string; phone?: string } }) =>
-      onboardingAPI.saveClient(projectId, client) as Promise<ApiResponse<SaveClientResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success) {
+    mutationFn: ({ projectId, data }: { projectId: number; data: SaveClientRequest }) =>
+      onboardingAPI.saveClient(projectId, data),
+    onSuccess: (response, variables) => {
+      if (response.success) {
         // Update the onboarding data cache
         queryClient.invalidateQueries({
           queryKey: onboardingKeys.data(variables.projectId)
         })
+        // Invalidate client cache
+        queryClient.invalidateQueries({
+          queryKey: onboardingKeys.client(variables.projectId)
+        })
       }
     },
+    onError: (error: any) => {
+      console.error('Save client error:', error)
+    }
   })
 }
 
 // Review onboarding data mutation
 export function useReviewOnboarding() {
   return useMutation({
-    mutationFn: (data: { projectId: number }) => onboardingAPI.review(data) as Promise<ApiResponse<ReviewResponse>>,
+    mutationFn: (data: ReviewRequest) => 
+      onboardingAPI.review(data),
+    onError: (error: any) => {
+      console.error('Review onboarding error:', error)
+    }
   })
 }
 
@@ -311,14 +172,21 @@ export function useCompleteOnboarding() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { projectId: number; userId: number }) =>
-      onboardingAPI.complete(data) as Promise<ApiResponse<CompleteResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success) {
+    mutationFn: (data: CompleteRequest) =>
+      onboardingAPI.complete(data),
+    onSuccess: (response, variables) => {
+      if (response.success) {
         // Invalidate all onboarding queries
         queryClient.invalidateQueries({ queryKey: onboardingKeys.all })
+        // Specifically invalidate progress
+        queryClient.invalidateQueries({
+          queryKey: onboardingKeys.progress(variables.userId)
+        })
       }
     },
+    onError: (error: any) => {
+      console.error('Complete onboarding error:', error)
+    }
   })
 }
 
@@ -326,8 +194,10 @@ export function useCompleteOnboarding() {
 export function useOnboardingProgress(userId: number) {
   return useQuery({
     queryKey: onboardingKeys.progress(userId),
-    queryFn: () => onboardingAPI.getProgress(userId) as Promise<ApiResponse<ProgressResponse>>,
-    enabled: !!userId,
+    queryFn: () => onboardingAPI.getProgress(userId),
+    enabled: !!userId && userId > 0,
+    staleTime: 30000, // 30 seconds
+    retry: 2,
   })
 }
 
@@ -335,8 +205,10 @@ export function useOnboardingProgress(userId: number) {
 export function useOnboardingData(projectId: number) {
   return useQuery({
     queryKey: onboardingKeys.data(projectId),
-    queryFn: () => onboardingAPI.getOnboardingData(projectId) as Promise<ApiResponse<OnboardingDataResponse>>,
-    enabled: !!projectId,
+    queryFn: () => onboardingAPI.getOnboardingData(projectId),
+    enabled: !!projectId && projectId > 0,
+    staleTime: 30000,
+    retry: 2,
   })
 }
 
@@ -345,16 +217,19 @@ export function useUpdateOnboardingStep() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { userId: number; projectId: number; step: number }) =>
-      onboardingAPI.updateStep(data) as Promise<ApiResponse<UpdateStepResponse>>,
-    onSuccess: (data, variables) => {
-      if (data.success) {
+    mutationFn: (data: UpdateStepRequest) =>
+      onboardingAPI.updateStep(data),
+    onSuccess: (response, variables) => {
+      if (response.success) {
         // Invalidate progress queries
         queryClient.invalidateQueries({
           queryKey: onboardingKeys.progress(variables.userId)
         })
       }
     },
+    onError: (error: any) => {
+      console.error('Update step error:', error)
+    }
   })
 }
 
@@ -362,7 +237,9 @@ export function useUpdateOnboardingStep() {
 export function useProjects() {
   return useQuery({
     queryKey: onboardingKeys.projects(),
-    queryFn: () => onboardingAPI.getProjects() as Promise<ApiResponse<ProjectsResponse>>,
+    queryFn: () => onboardingAPI.getProjects(),
+    staleTime: 60000, // 1 minute
+    retry: 2,
   })
 }
 
@@ -370,8 +247,10 @@ export function useProjects() {
 export function useProject(projectId: number) {
   return useQuery({
     queryKey: onboardingKeys.project(projectId),
-    queryFn: () => onboardingAPI.getProjectById(projectId) as Promise<ApiResponse<ProjectResponse>>,
-    enabled: !!projectId,
+    queryFn: () => onboardingAPI.getProjectById(projectId),
+    enabled: !!projectId && projectId > 0,
+    staleTime: 30000,
+    retry: 2,
   })
 }
 
@@ -379,8 +258,10 @@ export function useProject(projectId: number) {
 export function useRequirements(projectId: number) {
   return useQuery({
     queryKey: onboardingKeys.requirements(projectId),
-    queryFn: () => onboardingAPI.getRequirements(projectId) as Promise<ApiResponse<RequirementsResponse>>,
-    enabled: !!projectId,
+    queryFn: () => onboardingAPI.getRequirements(projectId),
+    enabled: !!projectId && projectId > 0,
+    staleTime: 30000,
+    retry: 2,
   })
 }
 
@@ -388,16 +269,25 @@ export function useRequirements(projectId: number) {
 export function useMilestones(projectId: number) {
   return useQuery({
     queryKey: onboardingKeys.milestones(projectId),
-    queryFn: () => onboardingAPI.getMilestones(projectId) as Promise<ApiResponse<MilestonesResponse>>,
-    enabled: !!projectId,
+    queryFn: () => onboardingAPI.getMilestones(projectId),
+    enabled: !!projectId && projectId > 0,
+    staleTime: 30000,
+    retry: 2,
   })
 }
 
-// Get client for project query
-export function useClient(projectId: number) {
-  return useQuery({
-    queryKey: onboardingKeys.client(projectId),
-    queryFn: () => onboardingAPI.getClient(projectId) as Promise<ApiResponse<ClientResponse>>,
-    enabled: !!projectId,
+// Clear onboarding mutation
+export function useClearOnboarding() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (projectId: number) => onboardingAPI.deleteProject(projectId),
+    onSuccess: () => {
+      // Invalidate all onboarding queries
+      queryClient.invalidateQueries({ queryKey: onboardingKeys.all })
+    },
+    onError: (error: any) => {
+      console.error('Clear onboarding error:', error)
+    }
   })
 }

@@ -1,34 +1,34 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { OnboardingFormData, INITIAL_ONBOARDING_DATA } from '@/types/onboarding';
 
 interface OnboardingState {
   step: number;
-  data: Record<string, any>;
+  data: OnboardingFormData;
   setStep: (step: number) => void;
-  updateData: (data: Record<string, any>) => void;
+  updateData: (newData: Partial<OnboardingFormData>) => void;
   reset: () => void;
 }
+
+const initialData: OnboardingFormData = {
+  project: { title: "", description: "", category: "", deadline: "" },
+  requirements: { notes: "", files: [] },
+  milestones: [],
+  client: { name: "", email: "", company: "", country: "", phone: "", contactPerson: "" },
+};
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
       step: 0,
-      data: {
-        project: { title: "", description: "", category: "", deadline: "" },
-        requirements: { notes: "", files: [] },
-        milestones: [{ title: "", deliverable: "", deadline: "", amount: "" }],
-        client: { name: "", email: "", company: "", country: "" },
-      },
+      data: initialData,
       setStep: (step) => set({ step }),
-      updateData: (newData) => set((state) => ({ data: { ...state.data, ...newData } })),
+      updateData: (newData) => set((state) => ({ 
+        data: { ...state.data, ...newData } 
+      })),
       reset: () => set({ 
         step: 0, 
-        data: {
-          project: { title: "", description: "", category: "", deadline: "" },
-          requirements: { notes: "", files: [] },
-          milestones: [{ title: "", deliverable: "", deadline: "", amount: "" }],
-          client: { name: "", email: "", company: "", country: "" },
-        }
+        data: initialData
       }),
     }),
     { name: 'onboarding-storage' }
