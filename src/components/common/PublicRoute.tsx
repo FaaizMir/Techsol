@@ -9,15 +9,16 @@ interface PublicRouteProps {
   redirectTo?: string
 }
 
-export function PublicRoute({ children, redirectTo = '/dashboard' }: PublicRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+export function PublicRoute({ children, redirectTo }: PublicRouteProps) {
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push(redirectTo)
+      const defaultRedirect = user?.role === 'admin' ? '/adminDashboard' : '/dashboard'
+      router.push(redirectTo || defaultRedirect)
     }
-  }, [isAuthenticated, isLoading, router, redirectTo])
+  }, [isAuthenticated, isLoading, user?.role, router, redirectTo])
 
   if (isLoading) {
     return (

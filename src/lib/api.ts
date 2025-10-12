@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Base API URL (from constants)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
 // Generic API call function
 export async function apiCall<T>(
@@ -163,6 +163,38 @@ export const onboardingAPI = {
   updateProjectStatus: (projectId: number, data: { status: string; progress: number }): Promise<ApiResponse<any>> =>
     apiCall(`/onboarding/projects/${projectId}/status`, 'PUT', data),
 
+  // Edit project
+  editProject: (projectId: number, data: Partial<{
+    title: string;
+    description: string;
+    category: string;
+    deadline: string;
+    status: string;
+    priority: string;
+    budget: number;
+    progress: number;
+  }>): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}`, 'PUT', data),
+
+  // Edit milestones
+  editMilestones: (projectId: number, data: { milestones: any[] }): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}/milestones`, 'PUT', data),
+
+  // Edit requirements
+  editRequirements: (projectId: number, data: { notes: string }): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}/requirements`, 'PUT', data),
+
+  // Edit client
+  editClient: (clientId: number, data: Partial<{
+    name: string;
+    email: string;
+    company: string;
+    country: string;
+    phone: string;
+    contactPerson: string;
+  }>): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/clients/${clientId}`, 'PUT', data),
+
   // Delete project
   deleteProject: (projectId: number): Promise<ApiResponse<{ message: string }>> =>
     apiCall(`/onboarding/projects/${projectId}`, 'DELETE'),
@@ -296,4 +328,29 @@ export const profileAPI = {
   // Change password
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiCall('/profile/password', 'PUT', data),
+};
+
+// Admin API
+export const adminAPI = {
+  // Get all proposal documents
+  getProposalDocuments: () => apiCall('/admin/proposal-documents', 'GET'),
+
+  // Create proposal document
+  createProposalDocument: (data: {
+    projectId: number;
+    userId: number;
+    content: string;
+  }) => apiCall('/admin/proposal-documents', 'POST', data),
+
+  // Update project
+  updateProject: (id: number, data: any) => apiCall(`/admin/projects/${id}`, 'PUT', data),
+
+  // Update client
+  updateClient: (id: number, data: any) => apiCall(`/admin/clients/${id}`, 'PUT', data),
+
+  // Update milestone
+  updateMilestone: (id: number, data: any) => apiCall(`/admin/milestones/${id}`, 'PUT', data),
+
+  // Update requirement
+  updateRequirement: (id: number, data: any) => apiCall(`/admin/requirements/${id}`, 'PUT', data),
 };

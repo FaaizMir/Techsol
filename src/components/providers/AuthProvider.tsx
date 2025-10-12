@@ -9,6 +9,7 @@ interface User {
   id: number;
   email: string;
   username?: string;
+  role: 'user' | 'admin';
   isOnboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;
@@ -52,11 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.token) {
         localStorage.setItem('token', response.token)
         setAuth(response.token, response.user)
-        // Check if onboarding is needed
-        if (!response.user.isOnboardingCompleted) {
-          router.push('/dashboard') // Will show onboarding modal
+        
+        // Check user role and redirect accordingly
+        if (response.user.role === 'admin') {
+          router.push('/adminDashboard')
         } else {
-          router.push('/dashboard')
+          // Check if onboarding is needed for regular users
+          if (!response.user.isOnboardingCompleted) {
+            router.push('/dashboard') // Will show onboarding modal
+          } else {
+            router.push('/dashboard')
+          }
         }
       } else {
         throw new Error('Login failed: No token received')

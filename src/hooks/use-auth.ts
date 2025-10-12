@@ -18,6 +18,7 @@ interface AuthResponse {
     user: {
       id: number;
       email: string;
+      role: 'user' | 'admin';
       isOnboardingCompleted: boolean;
     };
     token: string;
@@ -29,6 +30,7 @@ interface ProfileResponse {
   data: {
     id: number;
     email: string;
+    role: 'user' | 'admin';
     isOnboardingCompleted: boolean;
   };
 }
@@ -40,6 +42,7 @@ interface CheckAuthResponse {
     user: {
       id: number;
       email: string;
+      role: 'user' | 'admin';
     };
   };
 }

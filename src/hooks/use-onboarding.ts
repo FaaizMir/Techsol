@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useQuery } from '@tanstack/react-query'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import { useAuthStore } from '@/lib/stores/auth-store'
-import { onboardingAPI } from '@/lib/api'
+import { onboardingAPI, adminAPI } from '@/lib/api'
 import {
   useStartOnboarding,
   useSaveProject,
@@ -469,6 +469,14 @@ export function useOnboarding() {
       })
 
       if (result.success) {
+        // Generate proposal document after successful onboarding completion
+        try {
+          await generateProposalDocument()
+        } catch (docError) {
+          console.error('Failed to generate proposal document:', docError)
+          // Don't fail the entire process if document generation fails
+        }
+
         setIsComplete(true)
         setShowModal(false)
         return result.data
@@ -481,10 +489,69 @@ export function useOnboarding() {
     }
   }
 
-  const completeOnboarding = () => {
-    setIsComplete(true)
-    setShowModal(false)
-    console.log("Onboarding completed successfully!")
+  const generateProposalDocument = async () => {
+    if (!projectId || !user?.id) return
+
+    // Format the review data as a document
+    const documentContent = `
+PROJECT PROPOSAL DOCUMENT
+========================
+
+Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+
+PROJECT DETAILS
+---------------
+Title: ${data.project?.title || 'Not provided'}
+Description: ${data.project?.description || 'Not provided'}
+Category: ${data.project?.category || 'Not provided'}
+Deadline: ${data.project?.deadline ? new Date(data.project.deadline).toLocaleDateString() : 'Not provided'}
+
+CLIENT INFORMATION
+------------------
+Name: ${data.client?.name || 'Not provided'}
+Email: ${data.client?.email || 'Not provided'}
+Company: ${data.client?.company || 'Not provided'}
+Country: ${data.client?.country || 'Not provided'}
+Phone: ${data.client?.phone || 'Not provided'}
+Contact Person: ${data.client?.contactPerson || 'Not provided'}
+
+MILESTONES
+----------
+${data.milestones?.map((milestone: any, index: number) => 
+  `${index + 1}. ${milestone.title}
+     Deliverable: ${milestone.deliverable}
+     Deadline: ${new Date(milestone.deadline).toLocaleDateString()}
+     Amount: $${milestone.amount}
+`).join('\n') || 'No milestones defined'}
+
+REQUIREMENTS
+------------
+Notes: ${data.requirements?.notes || 'No notes provided'}
+
+Files: ${data.requirements?.files?.map((file: any) => file.filename).join(', ') || 'No files uploaded'}
+
+USER INFORMATION
+----------------
+Email: ${user.email}
+User ID: ${user.id}
+
+PROJECT ID: ${projectId}
+USER ID: ${user.id}
+    `.trim()
+
+    const documentData = {
+      projectId,
+      userId: user.id,
+      content: documentContent
+    }
+
+    const result = await adminAPI.createProposalDocument(documentData) as { success: boolean; data: any; message?: string }
+
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to generate proposal document')
+    }
+
+    return result.data
   }
 
   const resetOnboarding = () => {
@@ -600,7 +667,6 @@ export function useOnboarding() {
     saveClientInfo,
     reviewData,
     completeOnboardingProcess,
-    completeOnboarding,
     resetOnboarding,
     startNewProject,
     closeModal,
