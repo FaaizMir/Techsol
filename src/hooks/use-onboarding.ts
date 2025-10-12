@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useQuery } from '@tanstack/react-query'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import { useAuthStore } from '@/lib/stores/auth-store'
-import { onboardingAPI } from '@/lib/api'
+import { onboardingAPI, adminAPI } from '@/lib/api'
 import {
   useStartOnboarding,
   useSaveProject,
@@ -16,39 +16,29 @@ import {
   useOnboardingProgress,
   useOnboardingData,
   useUpdateOnboardingStep,
-  useProjects
+  useProjects,
+  useClearOnboarding
 } from './use-onboarding-api'
+import type {
+  OnboardingFormData,
+  SaveProjectRequest,
+  SaveMilestonesRequest,
+  SaveClientRequest,
+  CompleteRequest,
+  StartOnboardingRequest,
+} from '@/types/onboarding'
+import {
+  sanitizeProjectData,
+  sanitizeMilestoneData,
+  sanitizeClientData,
+  fromISODate,
+} from '@/types/onboarding'
 
-interface OnboardingData {
-  project: {
-    title: string
-    description: string
-    category: string
-    deadline: string
-  }
-  requirements: {
-    notes: string
-    files: File[]
-  }
-  milestones: Array<{
-    title: string
-    deliverable: string
-    deadline: string
-    amount: string
-  }>
-  client: {
-    name: string
-    email: string
-    company: string
-    country: string
-  }
-}
-
-const initialData: OnboardingData = {
+const initialData: OnboardingFormData = {
   project: { title: "", description: "", category: "", deadline: "" },
   requirements: { notes: "", files: [] },
-  milestones: [{ title: "", deliverable: "", deadline: "", amount: "" }],
-  client: { name: "", email: "", company: "", country: "" },
+  milestones: [],
+  client: { name: "", email: "", company: "", country: "", phone: "", contactPerson: "" },
 }
 
 // Get all projects with filters (dashboard) - exported hook
@@ -85,6 +75,7 @@ export function useOnboarding() {
   const reviewMutation = useReviewOnboarding()
   const completeMutation = useCompleteOnboarding()
   const updateStepMutation = useUpdateOnboardingStep()
+  const clearMutation = useClearOnboarding()
 
   // Progress query
   const { data: progressData, refetch: refetchProgress } = useOnboardingProgress(user?.id || 0)
@@ -123,40 +114,31 @@ export function useOnboarding() {
             setShowModal(false)
           } else {
             setShowModal(true)
-            setIsResuming(true) // Indicate we're resuming existing onboarding
-            // Set current step from progress
-            if (progress?.currentStep !== undefined) {
-              setStep(progress.currentStep)
-            }
-            // Set projectId from progress
-            if (progress?.projectId) {
-              setProjectId(progress.projectId)
-            } else {
-              // Fetch projects to find the most recent draft project for onboarding
-              try {
-                const projectsResult = await refetchProjects()
-                if (projectsResult.data?.success && projectsResult.data.data?.projects?.length) {
-                  // Find the most recent draft project (assuming onboarding creates draft projects)
-                  const projects = projectsResult.data.data.projects
-                  const draftProjects = projects.filter((p: any) => p.status === 'draft')
-                  if (draftProjects.length > 0) {
-                    // Sort by createdAt descending and take the most recent
-                    const latestDraftProject = draftProjects.sort((a: any, b: any) =>
-                      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                    )[0]
-                    setProjectId(latestDraftProject.id)
-                  }
-                }
-              } catch (projectsError) {
-                console.error('Failed to fetch projects for onboarding:', projectsError)
-                // Continue without projectId - it will be created when saving project details
+            
+            // Check if user has started onboarding (currentStep > 0 or has projectId)
+            const hasStarted = progress?.projectId || (progress?.currentStep && progress.currentStep > 0)
+            
+            if (hasStarted) {
+              setIsResuming(true)
+              // Set current step from progress
+              if (progress?.currentStep !== undefined) {
+                setStep(progress.currentStep)
               }
+              // Set projectId from progress if available
+              if (progress?.projectId) {
+                setProjectId(progress.projectId)
+              }
+            } else {
+              // New user - hasn't started onboarding yet
+              setIsResuming(false)
+              setStep(0)
             }
           }
         } else {
-          // If no progress exists, start onboarding
+          // If no progress exists, start fresh onboarding
           setShowModal(true)
           setIsResuming(false)
+          setStep(0)
         }
       } catch (error) {
         console.error("Failed to load onboarding state:", error)
@@ -184,7 +166,7 @@ export function useOnboarding() {
     }
   }, [step, data, setStep, isResuming])
   
-  const updateData = useCallback((section: keyof OnboardingData, newData: OnboardingData[typeof section]) => {
+  const updateData = useCallback((section: keyof OnboardingFormData, newData: OnboardingFormData[typeof section]) => {
     storeUpdateData({ [section]: newData })
   }, [storeUpdateData])
   // Populate store with fetched onboarding data
@@ -192,28 +174,55 @@ export function useOnboarding() {
     if (onboardingData?.success && onboardingData.data && projectId) {
       const fetchedData = onboardingData.data
       if (fetchedData.project) {
-        updateData('project', fetchedData.project)
+        updateData('project', {
+          title: fetchedData.project.title || "",
+          description: fetchedData.project.description || "",
+          category: fetchedData.project.category || "",
+          deadline: fromISODate(fetchedData.project.deadline) || "",
+        })
       }
+
+      // Update requirements data
       if (fetchedData.requirements) {
-        // Files should already be an array from the API, but handle legacy string format
-        const requirements = { ...fetchedData.requirements }
-        if (typeof requirements.files === 'string') {
+        // Parse files if they're a JSON string
+        let files = fetchedData.requirements.files
+        if (typeof files === 'string') {
           try {
-            requirements.files = JSON.parse(requirements.files)
+            files = JSON.parse(files)
           } catch (e) {
-            console.warn('Failed to parse requirements files, using empty array')
-            requirements.files = []
+            console.error('Failed to parse requirements files:', e)
+            files = []
           }
-        } else if (!Array.isArray(requirements.files)) {
-          requirements.files = []
+        }
+        
+        const requirements = {
+          notes: fetchedData.requirements.notes || "",
+          files: Array.isArray(files) ? files as any : [],
         }
         updateData('requirements', requirements)
       }
+
+      // Update milestones data
       if (fetchedData.milestones && Array.isArray(fetchedData.milestones)) {
-        updateData('milestones', fetchedData.milestones)
+        const milestones = fetchedData.milestones.map((m: any) => ({
+          title: m.title || "",
+          deliverable: m.deliverable || "",
+          deadline: fromISODate(m.deadline) || "",
+          amount: String(m.amount || ""),
+        }))
+        updateData('milestones', milestones)
       }
+
+      // Update client data
       if (fetchedData.client) {
-        updateData('client', fetchedData.client)
+        updateData('client', {
+          name: fetchedData.client.name || "",
+          email: fetchedData.client.email || "",
+          company: fetchedData.client.company || "",
+          country: fetchedData.client.country || "",
+          phone: fetchedData.client.phone || "",
+          contactPerson: fetchedData.client.contactPerson || "",
+        })
       }
     }
   }, [onboardingData, projectId, updateData])
@@ -229,7 +238,8 @@ export function useOnboarding() {
 
     try {
       setError(null)
-      const result = await startOnboardingMutation.mutateAsync(user.id)
+      const payload: StartOnboardingRequest = { userId: user.id }
+      const result = await startOnboardingMutation.mutateAsync(payload)
 
       if (result.success && result.data) {
         // Note: projectId is null here - actual project created in saveProjectDetails
@@ -244,7 +254,7 @@ export function useOnboarding() {
     }
   }
 
-  const saveProjectDetails = async (projectData: OnboardingData['project']) => {
+  const saveProjectDetails = async (projectData: OnboardingFormData['project']) => {
     // If no projectId exists, start onboarding first to initialize the process
     if (!projectId) {
       await startOnboarding()
@@ -252,13 +262,20 @@ export function useOnboarding() {
       // The actual project will be created by saveProject below
     }
 
+    if (!user?.id) {
+      throw new Error("User not authenticated")
+    }
+
     try {
       setError(null)
-      // Call saveProject without projectId to create the actual project
-      const result = await saveProjectMutation.mutateAsync({
-        ...projectData
-        // projectId is intentionally omitted to create a new project
-      })
+      // Sanitize and prepare payload
+      const sanitized = sanitizeProjectData(projectData)
+      const payload: SaveProjectRequest = {
+        ...sanitized,
+        userId: user.id,
+      }
+
+      const result = await saveProjectMutation.mutateAsync(payload)
 
       if (result.success && result.data?.project?.id) {
         // Set the real projectId from the created project
@@ -274,7 +291,7 @@ export function useOnboarding() {
     }
   }
 
-  const saveRequirements = async (requirementsData: OnboardingData['requirements']) => {
+  const saveRequirements = async (requirementsData: OnboardingFormData['requirements']) => {
     if (!projectId) throw new Error("No project ID available")
 
     try {
@@ -303,14 +320,21 @@ export function useOnboarding() {
     }
   }
 
-  const saveMilestones = async (milestonesData: OnboardingData['milestones']) => {
+  const saveMilestones = async (milestonesData: OnboardingFormData['milestones']) => {
     if (!projectId) throw new Error("No project ID available")
 
     try {
       setError(null)
+      
+      // Sanitize and convert milestones
+      const sanitizedMilestones = sanitizeMilestoneData(milestonesData)
+      const payload: SaveMilestonesRequest = {
+        milestones: sanitizedMilestones
+      }
+
       const result = await saveMilestonesMutation.mutateAsync({
         projectId,
-        milestones: milestonesData
+        data: payload
       })
 
       if (result.success) {
@@ -325,20 +349,15 @@ export function useOnboarding() {
     }
   }
 
-  const saveClientInfo = async (clientData: OnboardingData['client']) => {
+  const saveClientInfo = async (clientData: OnboardingFormData['client']) => {
     if (!projectId) throw new Error("No project ID available")
 
     try {
       setError(null)
       
-      // Sanitize client data - ensure required fields are present and clean optional fields
-      const sanitizedClient = {
-        name: clientData?.name?.trim() || "",
-        email: clientData?.email?.trim() || "",
-        country: clientData?.country?.trim() || "",
-        company: clientData?.company?.trim() || undefined, // Send undefined instead of empty string for optional field
-      }
-
+      // Sanitize client data
+      const sanitizedClient = sanitizeClientData(clientData)
+      
       // Validate required fields
       if (!sanitizedClient.name) {
         throw new Error("Client name is required")
@@ -350,9 +369,13 @@ export function useOnboarding() {
         throw new Error("Client country is required")
       }
 
+      const payload: SaveClientRequest = {
+        client: sanitizedClient
+      }
+
       const result = await saveClientMutation.mutateAsync({
         projectId,
-        client: sanitizedClient
+        data: payload
       })
 
       if (result.success) {
@@ -375,24 +398,56 @@ export function useOnboarding() {
       const result = await reviewMutation.mutateAsync({ projectId })
 
       if (result.success && result.data) {
-        // Update store with review data
-        const reviewData = result.data
-        if (reviewData.project) updateData('project', reviewData.project)
-        if (reviewData.requirements) {
-          // Parse files string to array if needed
-          const requirements = { ...reviewData.requirements }
-          if (typeof requirements.files === 'string') {
+        // Update store with review data for display
+        if (result.data.project) {
+          updateData('project', {
+            title: result.data.project.title || "",
+            description: result.data.project.description || "",
+            category: result.data.project.category || "",
+            deadline: fromISODate(result.data.project.deadline) || "",
+          })
+        }
+
+        if (result.data.requirements) {
+          // Parse files if they're a JSON string
+          let files = result.data.requirements.files
+          if (typeof files === 'string') {
             try {
-              requirements.files = JSON.parse(requirements.files)
+              files = JSON.parse(files)
             } catch (e) {
-              requirements.files = []
+              console.error('Failed to parse requirements files:', e)
+              files = []
             }
           }
-          updateData('requirements', requirements)
+          
+          updateData('requirements', {
+            notes: result.data.requirements.notes || "",
+            files: Array.isArray(files) ? files as any : [],
+          })
         }
-        if (reviewData.milestones) updateData('milestones', reviewData.milestones)
-        if (reviewData.client) updateData('client', reviewData.client)
-        setCurrentStep(result.data?.nextStep || step + 1)
+
+        if (result.data.milestones) {
+          const milestones = result.data.milestones.map((m: any) => ({
+            title: m.title || "",
+            deliverable: m.deliverable || "",
+            deadline: fromISODate(m.deadline) || "",
+            amount: String(m.amount || ""),
+          }))
+          updateData('milestones', milestones)
+        }
+
+        if (result.data.client) {
+          updateData('client', {
+            name: result.data.client.name || "",
+            email: result.data.client.email || "",
+            company: result.data.client.company || "",
+            country: result.data.client.country || "",
+            phone: result.data.client.phone || "",
+            contactPerson: result.data.client.contactPerson || "",
+          })
+        }
+
+        // Don't update step here - let the modal handle step progression
         return result.data
       } else {
         throw new Error(result.error?.message || "Failed to review data")
@@ -414,6 +469,14 @@ export function useOnboarding() {
       })
 
       if (result.success) {
+        // Generate proposal document after successful onboarding completion
+        try {
+          await generateProposalDocument()
+        } catch (docError) {
+          console.error('Failed to generate proposal document:', docError)
+          // Don't fail the entire process if document generation fails
+        }
+
         setIsComplete(true)
         setShowModal(false)
         return result.data
@@ -426,10 +489,69 @@ export function useOnboarding() {
     }
   }
 
-  const completeOnboarding = () => {
-    setIsComplete(true)
-    setShowModal(false)
-    console.log("Onboarding completed successfully!")
+  const generateProposalDocument = async () => {
+    if (!projectId || !user?.id) return
+
+    // Format the review data as a document
+    const documentContent = `
+PROJECT PROPOSAL DOCUMENT
+========================
+
+Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+
+PROJECT DETAILS
+---------------
+Title: ${data.project?.title || 'Not provided'}
+Description: ${data.project?.description || 'Not provided'}
+Category: ${data.project?.category || 'Not provided'}
+Deadline: ${data.project?.deadline ? new Date(data.project.deadline).toLocaleDateString() : 'Not provided'}
+
+CLIENT INFORMATION
+------------------
+Name: ${data.client?.name || 'Not provided'}
+Email: ${data.client?.email || 'Not provided'}
+Company: ${data.client?.company || 'Not provided'}
+Country: ${data.client?.country || 'Not provided'}
+Phone: ${data.client?.phone || 'Not provided'}
+Contact Person: ${data.client?.contactPerson || 'Not provided'}
+
+MILESTONES
+----------
+${data.milestones?.map((milestone: any, index: number) => 
+  `${index + 1}. ${milestone.title}
+     Deliverable: ${milestone.deliverable}
+     Deadline: ${new Date(milestone.deadline).toLocaleDateString()}
+     Amount: $${milestone.amount}
+`).join('\n') || 'No milestones defined'}
+
+REQUIREMENTS
+------------
+Notes: ${data.requirements?.notes || 'No notes provided'}
+
+Files: ${data.requirements?.files?.map((file: any) => file.filename).join(', ') || 'No files uploaded'}
+
+USER INFORMATION
+----------------
+Email: ${user.email}
+User ID: ${user.id}
+
+PROJECT ID: ${projectId}
+USER ID: ${user.id}
+    `.trim()
+
+    const documentData = {
+      projectId,
+      userId: user.id,
+      content: documentContent
+    }
+
+    const result = await adminAPI.createProposalDocument(documentData) as { success: boolean; data: any; message?: string }
+
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to generate proposal document')
+    }
+
+    return result.data
   }
 
   const resetOnboarding = () => {
@@ -464,14 +586,50 @@ export function useOnboarding() {
 
   const isStepValid = (stepNum: number): boolean => {
     switch (stepNum) {
-      case 1: // Project details
-        return !!(data.project?.title && data.project?.description)
-      case 3: // Payment plan (milestones)
-        return data.milestones?.some((m: OnboardingData['milestones'][0]) => m.title && m.amount) ?? false
-      case 4: // Client info
-        return !!(data.client?.name && data.client?.email)
+      case 0: // Project details
+        return !!(data.project?.title && data.project?.description && data.project?.category && data.project?.deadline)
+      case 2: // Milestones
+        return data.milestones && data.milestones.length > 0 && data.milestones.every(m => m.title && m.deliverable && m.deadline && m.amount)
+      case 3: // Client info
+        return !!(data.client?.name && data.client?.email && data.client?.country)
       default:
         return true
+    }
+  }
+
+  const handleStepChange = async (newStep: number) => {
+    if (!projectId || !user?.id) return
+    
+    try {
+      const result = await updateStepMutation.mutateAsync({ 
+        userId: user.id, 
+        projectId, 
+        step: newStep 
+      })
+      
+      if (result.success) {
+        setStep(newStep)
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to update step"
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    }
+  }
+
+  const handleClear = async (projectIdToClear: number) => {
+    try {
+      await clearMutation.mutateAsync(projectIdToClear)
+      // Reset state
+      setProjectId(null)
+      setStep(0)
+      setIsComplete(false)
+      setError(null)
+      setShowModal(true)
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to clear onboarding"
+      setError(errorMessage)
+      throw new Error(errorMessage)
     }
   }
 
@@ -484,7 +642,8 @@ export function useOnboarding() {
     saveClientMutation.isPending ||
     reviewMutation.isPending ||
     completeMutation.isPending ||
-    updateStepMutation.isPending
+    updateStepMutation.isPending ||
+    clearMutation.isPending
 
   return {
     // State
@@ -508,12 +667,13 @@ export function useOnboarding() {
     saveClientInfo,
     reviewData,
     completeOnboardingProcess,
-    completeOnboarding,
     resetOnboarding,
     startNewProject,
     closeModal,
     openModal,
     isStepValid,
+    handleStepChange,
+    handleClear,
 
     // API data
     progressData: progressData?.data,

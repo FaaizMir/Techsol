@@ -5,6 +5,7 @@ interface User {
   id: number;
   email: string;
   username?: string;
+  role: 'user' | 'admin';
   isOnboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Base API URL (from constants)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
 // Generic API call function
 export async function apiCall<T>(
@@ -66,69 +66,90 @@ export const authAPI = {
 };
 
 // Onboarding API
+import type {
+  StartOnboardingRequest,
+  SaveProjectRequest,
+  SaveMilestonesRequest,
+  SaveClientRequest,
+  ReviewRequest,
+  CompleteRequest,
+  UpdateStepRequest,
+  ApiResponse,
+  StartOnboardingResponse,
+  SaveProjectResponse,
+  SaveRequirementsResponse,
+  SaveMilestonesResponse,
+  SaveClientResponse,
+  ReviewResponse,
+  CompleteResponse,
+  ProgressData,
+  OnboardingDataResponse,
+  UpdateStepResponse,
+} from '@/types/onboarding';
+
 export const onboardingAPI = {
   // Start onboarding process
-  start: (data: { userId: number }) => apiCall('/onboarding/start', 'POST', data),
+  start: (data: StartOnboardingRequest): Promise<ApiResponse<StartOnboardingResponse>> =>
+    apiCall('/onboarding/start', 'POST', data),
 
   // Save project details
-  saveProject: (data: { title: string; description: string; category: string; deadline: string }) =>
+  saveProject: (data: SaveProjectRequest): Promise<ApiResponse<SaveProjectResponse>> =>
     apiCall('/onboarding/project', 'POST', data),
 
   // Save requirements with file upload
-  saveRequirements: (projectId: number, formData: FormData) => {
-    return apiCall(`/onboarding/requirements/${projectId}`, 'POST', formData);
-  },
+  saveRequirements: (projectId: number, formData: FormData): Promise<ApiResponse<SaveRequirementsResponse>> =>
+    apiCall(`/onboarding/requirements/${projectId}`, 'POST', formData),
 
   // Save milestones
-  saveMilestones: (projectId: number, milestones: any[]) =>
-    apiCall(`/onboarding/milestones/${projectId}`, 'POST', { milestones }),
+  saveMilestones: (projectId: number, data: SaveMilestonesRequest): Promise<ApiResponse<SaveMilestonesResponse>> =>
+    apiCall(`/onboarding/milestones/${projectId}`, 'POST', data),
 
   // Save client info
-  saveClient: (projectId: number, client: { name: string; email: string; company?: string; country: string; phone?: string; contactPerson?: string }) =>
-    apiCall(`/onboarding/client/${projectId}`, 'POST', { client }),
+  saveClient: (projectId: number, data: SaveClientRequest): Promise<ApiResponse<SaveClientResponse>> =>
+    apiCall(`/onboarding/client/${projectId}`, 'POST', data),
 
   // Review onboarding data
-  review: (data: { projectId: number }) =>
+  review: (data: ReviewRequest): Promise<ApiResponse<ReviewResponse>> =>
     apiCall('/onboarding/review', 'POST', data),
 
   // Complete onboarding
-  complete: (data: { projectId: number }) =>
+  complete: (data: CompleteRequest): Promise<ApiResponse<CompleteResponse>> =>
     apiCall('/onboarding/complete', 'POST', data),
 
   // Get onboarding progress
-  getProgress: (userId: number) =>
+  getProgress: (userId: number): Promise<ApiResponse<ProgressData>> =>
     apiCall(`/onboarding/progress/${userId}`, 'GET'),
 
   // Get complete onboarding data
-  getOnboardingData: (projectId: number) =>
+  getOnboardingData: (projectId: number): Promise<ApiResponse<OnboardingDataResponse>> =>
     apiCall(`/onboarding/${projectId}`, 'GET'),
 
   // Update onboarding step
-  updateStep: (data: { userId: number; projectId: number; step: number }) =>
+  updateStep: (data: UpdateStepRequest): Promise<ApiResponse<UpdateStepResponse>> =>
     apiCall('/onboarding/step', 'PUT', data),
 
   // Get all projects
-  getProjects: () =>
+  getProjects: (): Promise<ApiResponse<{ projects: any[] }>> =>
     apiCall('/onboarding/projects', 'GET'),
 
   // Get project by ID
-  getProjectById: (projectId: number) =>
+  getProjectById: (projectId: number): Promise<ApiResponse<{ project: any }>> =>
     apiCall(`/onboarding/projects/${projectId}`, 'GET'),
 
   // Get requirements for project
-  getRequirements: (projectId: number) =>
+  getRequirements: (projectId: number): Promise<ApiResponse<{ requirements: any }>> =>
     apiCall(`/onboarding/projects/${projectId}/requirements`, 'GET'),
 
   // Get milestones for project
-  getMilestones: (projectId: number) =>
+  getMilestones: (projectId: number): Promise<ApiResponse<{ milestones: any[] }>> =>
     apiCall(`/onboarding/projects/${projectId}/milestones`, 'GET'),
 
   // Get client for project
-  getClient: (projectId: number) =>
+  getClient: (projectId: number): Promise<ApiResponse<{ client: any }>> =>
     apiCall(`/onboarding/projects/${projectId}/client`, 'GET'),
 
   // Get all projects (dashboard)
-  getAllProjects: (params?: { status?: string; client?: string; search?: string; page?: number; limit?: number }) => {
+  getAllProjects: (params?: { status?: string; client?: string; search?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> => {
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.append('status', params.status);
     if (params?.client) queryParams.append('client', params.client);
@@ -139,11 +160,43 @@ export const onboardingAPI = {
   },
 
   // Update project status
-  updateProjectStatus: (projectId: number, data: { status: string; progress: number }) =>
+  updateProjectStatus: (projectId: number, data: { status: string; progress: number }): Promise<ApiResponse<any>> =>
     apiCall(`/onboarding/projects/${projectId}/status`, 'PUT', data),
 
+  // Edit project
+  editProject: (projectId: number, data: Partial<{
+    title: string;
+    description: string;
+    category: string;
+    deadline: string;
+    status: string;
+    priority: string;
+    budget: number;
+    progress: number;
+  }>): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}`, 'PUT', data),
+
+  // Edit milestones
+  editMilestones: (projectId: number, data: { milestones: any[] }): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}/milestones`, 'PUT', data),
+
+  // Edit requirements
+  editRequirements: (projectId: number, data: { notes: string }): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/projects/${projectId}/requirements`, 'PUT', data),
+
+  // Edit client
+  editClient: (clientId: number, data: Partial<{
+    name: string;
+    email: string;
+    company: string;
+    country: string;
+    phone: string;
+    contactPerson: string;
+  }>): Promise<ApiResponse<any>> =>
+    apiCall(`/onboarding/clients/${clientId}`, 'PUT', data),
+
   // Delete project
-  deleteProject: (projectId: number) =>
+  deleteProject: (projectId: number): Promise<ApiResponse<{ message: string }>> =>
     apiCall(`/onboarding/projects/${projectId}`, 'DELETE'),
 };
 
@@ -275,4 +328,29 @@ export const profileAPI = {
   // Change password
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiCall('/profile/password', 'PUT', data),
+};
+
+// Admin API
+export const adminAPI = {
+  // Get all proposal documents
+  getProposalDocuments: () => apiCall('/admin/proposal-documents', 'GET'),
+
+  // Create proposal document
+  createProposalDocument: (data: {
+    projectId: number;
+    userId: number;
+    content: string;
+  }) => apiCall('/admin/proposal-documents', 'POST', data),
+
+  // Update project
+  updateProject: (id: number, data: any) => apiCall(`/admin/projects/${id}`, 'PUT', data),
+
+  // Update client
+  updateClient: (id: number, data: any) => apiCall(`/admin/clients/${id}`, 'PUT', data),
+
+  // Update milestone
+  updateMilestone: (id: number, data: any) => apiCall(`/admin/milestones/${id}`, 'PUT', data),
+
+  // Update requirement
+  updateRequirement: (id: number, data: any) => apiCall(`/admin/requirements/${id}`, 'PUT', data),
 };
