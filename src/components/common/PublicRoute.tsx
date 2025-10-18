@@ -15,7 +15,7 @@ export function PublicRoute({ children, redirectTo }: PublicRouteProps) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      const defaultRedirect = user?.role === 'admin' ? '/adminDashboard' : '/dashboard'
+      const defaultRedirect = user?.role === 'admin' ? '/admin' : '/dashboard'
       router.push(redirectTo || defaultRedirect)
     }
   }, [isAuthenticated, isLoading, user?.role, router, redirectTo])

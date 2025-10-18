@@ -52,11 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.token) {
         localStorage.setItem('token', response.token)
+        localStorage.setItem('jwt_token', response.token) // For socket compatibility
+        localStorage.setItem('user_id', response.user.id.toString()) // Store user ID
+        localStorage.setItem('user_role', response.user.role) // Store user role
         setAuth(response.token, response.user)
         
         // Check user role and redirect accordingly
         if (response.user.role === 'admin') {
-          router.push('/adminDashboard')
+          router.push('/admin')
         } else {
           // Check if onboarding is needed for regular users
           if (!response.user.isOnboardingCompleted) {
@@ -90,6 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('jwt_token')
+    localStorage.removeItem('user_id')
+    localStorage.removeItem('user_role')
     clearAuth()
     router.push('/login')
   }
@@ -106,12 +112,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.valid && response.user) {
         setAuth(token, response.user)
+        localStorage.setItem('user_id', response.user.id.toString())
+        localStorage.setItem('user_role', response.user.role)
       } else {
         localStorage.removeItem('token')
+        localStorage.removeItem('jwt_token')
+        localStorage.removeItem('user_id')
+        localStorage.removeItem('user_role')
         clearAuth()
       }
     } catch (error) {
       localStorage.removeItem('token')
+      localStorage.removeItem('jwt_token')
+      localStorage.removeItem('user_id')
+      localStorage.removeItem('user_role')
       clearAuth()
     } finally {
       setIsLoading(false)

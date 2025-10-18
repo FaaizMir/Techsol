@@ -220,20 +220,41 @@ export const dashboardAPI = {
 
 // Chat API
 export const chatAPI = {
-  // Get all conversations
+  // Get all conversations for current user
   getConversations: () => apiCall('/chat/conversations', 'GET'),
 
   // Get conversation messages
   getConversationMessages: (conversationId: number) =>
     apiCall(`/chat/conversations/${conversationId}/messages`, 'GET'),
 
-  // Send message
+  // Send message to conversation (existing conversation)
   sendMessage: (conversationId: number, data: { message: string }) =>
     apiCall(`/chat/conversations/${conversationId}/messages`, 'POST', data),
+
+  // Send first message (new conversation - for new users)
+  sendFirstMessage: (data: { message: string }) =>
+    apiCall('/chat/messages', 'POST', data),
 
   // Mark messages as read
   markAsRead: (conversationId: number) =>
     apiCall(`/chat/conversations/${conversationId}/read`, 'PUT'),
+
+  // Get chat statistics
+  getChatStats: () =>
+    apiCall('/chat/stats', 'GET'),
+
+  // Search messages
+  searchMessages: (params: { query: string; conversationId?: number }) => {
+    const queryParams = new URLSearchParams({ query: params.query });
+    if (params.conversationId) {
+      queryParams.append('conversationId', params.conversationId.toString());
+    }
+    return apiCall(`/chat/search?${queryParams.toString()}`, 'GET');
+  },
+
+  // Delete conversation (admin only)
+  deleteConversation: (conversationId: number) =>
+    apiCall(`/chat/conversations/${conversationId}`, 'DELETE'),
 };
 
 // Documents API
@@ -330,27 +351,3 @@ export const profileAPI = {
     apiCall('/profile/password', 'PUT', data),
 };
 
-// Admin API
-export const adminAPI = {
-  // Get all proposal documents
-  getProposalDocuments: () => apiCall('/admin/proposal-documents', 'GET'),
-
-  // Create proposal document
-  createProposalDocument: (data: {
-    projectId: number;
-    userId: number;
-    content: string;
-  }) => apiCall('/admin/proposal-documents', 'POST', data),
-
-  // Update project
-  updateProject: (id: number, data: any) => apiCall(`/admin/projects/${id}`, 'PUT', data),
-
-  // Update client
-  updateClient: (id: number, data: any) => apiCall(`/admin/clients/${id}`, 'PUT', data),
-
-  // Update milestone
-  updateMilestone: (id: number, data: any) => apiCall(`/admin/milestones/${id}`, 'PUT', data),
-
-  // Update requirement
-  updateRequirement: (id: number, data: any) => apiCall(`/admin/requirements/${id}`, 'PUT', data),
-};

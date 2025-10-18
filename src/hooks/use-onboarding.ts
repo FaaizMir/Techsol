@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useQuery } from '@tanstack/react-query'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import { useAuthStore } from '@/lib/stores/auth-store'
-import { onboardingAPI, adminAPI } from '@/lib/api'
+import { onboardingAPI } from '@/lib/api'
 import {
   useStartOnboarding,
   useSaveProject,
@@ -545,13 +545,17 @@ USER ID: ${user.id}
       content: documentContent
     }
 
-    const result = await adminAPI.createProposalDocument(documentData) as { success: boolean; data: any; message?: string }
-
-    if (!result.success) {
-      throw new Error(result.message || 'Failed to generate proposal document')
+    // TODO: Replace with new admin API when available
+    console.warn('Admin API for proposal documents not implemented yet')
+    
+    // For now, return a placeholder
+    return {
+      id: Date.now(),
+      projectId,
+      userId: user.id,
+      content: documentContent,
+      createdAt: new Date().toISOString()
     }
-
-    return result.data
   }
 
   const resetOnboarding = () => {

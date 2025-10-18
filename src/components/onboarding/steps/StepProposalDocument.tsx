@@ -35,27 +35,22 @@ export default function StepProposalDocument({ data, updateData, onNext, isSubmi
         }
       }
 
-      // Call API to generate and save the document
-      const response = await fetch('/api/admin/proposal-documents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(documentData),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate document')
-      }
-
-      const result = await response.json()
-      if (result.success) {
-        setDocumentUrl(result.data.documentUrl)
+      // TODO: Replace with new admin API when available
+      console.warn('Admin API for proposal documents not implemented yet')
+      
+      // For now, simulate document generation
+      setTimeout(() => {
         setDocumentGenerated(true)
-        updateData('proposalDocument', result.data)
-      } else {
-        throw new Error(result.message || 'Failed to generate document')
-      }
+        updateData('proposalDocument', {
+          id: Date.now(),
+          projectId: data.project?.id,
+          userId: user.id,
+          content: JSON.stringify(documentData),
+          createdAt: new Date().toISOString()
+        })
+        setIsGenerating(false)
+      }, 2000)
+      return
     } catch (error) {
       console.error('Error generating proposal document:', error)
       alert('Failed to generate proposal document. Please try again.')

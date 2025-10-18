@@ -18,8 +18,8 @@ export default function ClientLayout({
   const [isMounted, setIsMounted] = useState(false)
   const pathname = usePathname()
 
-  // Check if we're on dashboard routes
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  // Check if we're on dashboard or admin routes
+  const isDashboardRoute = pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin')
 
   useEffect(() => {
     setIsMounted(true)
