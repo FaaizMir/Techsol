@@ -36,7 +36,7 @@ export default function ProfileSection() {
     // If it's already a full URL, return as is
     if (path.startsWith('http://') || path.startsWith('https://')) return path
     // Otherwise, prepend the server base URL
-    const serverUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000'
+    const serverUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://techsol.vercel.app'
     return `${serverUrl}${path.startsWith('/') ? path : `/${path}`}`
   }
 
@@ -161,7 +161,7 @@ export default function ProfileSection() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={getImageUrl(profile.profilePicture)} />
+              <AvatarImage src={getImageUrl(profile.profilePicture) || undefined} />
               <AvatarFallback className="bg-slate-700 text-slate-300 text-2xl">
                 {profile.firstName?.[0]}{profile.lastName?.[0]}
               </AvatarFallback>

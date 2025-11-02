@@ -5,7 +5,7 @@ let socket: Socket | null = null
 let isConnecting = false
 
 // Get socket URL from environment or use default
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000'
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://techsol-api.vercel.app'
 
 export function getSocket(token?: string): Socket {
   // Return existing socket if already connected
