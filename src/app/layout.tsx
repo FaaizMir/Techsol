@@ -6,6 +6,11 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import NextTopLoader from 'nextjs-toploader'
 import './globals.css'
 
+export const metadata: Metadata = {
+  title: 'Tech Solutions',
+  description: 'Innovative technology solutions for modern businesses',
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
