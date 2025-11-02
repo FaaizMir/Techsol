@@ -17,7 +17,6 @@ import { useAuth } from "@/components/providers/AuthProvider"
 
 // Import components dynamically to prevent SSR issues
 const BackgroundParticles = dynamic(() => import('@/components/common/BackgroundParticles'), { ssr: false })
-const SceneContainer = dynamic(() => import('@/components/common/3d/SceneContainer'), { ssr: false })
 
 export default function HomePage() {
   const { currentSection } = useScrollSection()
@@ -141,9 +140,6 @@ export default function HomePage() {
       
       {/* Interactive background particles */}
       <BackgroundParticles />
-      
-      {/* 3D Scene that changes based on scroll position */}
-      {mounted && <SceneContainer currentSection={currentSection} />}
       
       <div className="pt-16 relative z-10">
         {/* Hero Section */}
