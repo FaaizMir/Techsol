@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Base API URL (from constants)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://techsol-api.vercel.app/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://techsol-backend.onrender.com/api';
 
 // Generic API call function
 export async function apiCall<T>(
